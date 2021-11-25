@@ -24,6 +24,7 @@ For information, see [Installing Part I: Prerequisites, EULA, and CLI](install-g
 + [Install Tanzu Build Service](#install-tbs)
 + [Install Supply Chain Choreographer](#install-scc)
 + [Install Out of the Box Templates](#install-ootb-templates)
++ [Install Out of the Box Delivery Basic](#install-ootb-delivery-basic)
 + [Install Default Supply Chain](#install-ootb-supply-chain-basic)
 + [Install Supply Chain Security Tools - Store](#install-scst-store)
 + [Install Supply Chain Security Tools - Sign](#install-scst-sign)
@@ -767,9 +768,56 @@ To install Out of the Box Templates:
    ```bash
     tanzu package install ootb-templates \
       --package-name ootb-templates.tanzu.vmware.com \
-      --version 0.3.0-build.5 \
+      --version 0.4.0-build.1 \
       --namespace tap-install
     ```
+
+## <a id='install-ootb-delivery-basic'></a> Install Out of The Box Delivery Basic
+
+The Out of the Delivery Basic is used by all Out of the Box Supply Chains in
+order to deploy the Kubernetes objects that have been produced by the Supply
+Chains.
+
+To install Out of The Box Delivery Basic:
+
+1. Gather the values schema:
+
+    ```console
+    tanzu package available get ootb-delivery-basic.tanzu.vmware.com/0.4.0-build.1 --values-schema -n tap-install
+    ```
+
+    For example:
+
+    ```console
+    $ tanzu package available get ootb-delivery-basic.tanzu.vmware.com/0.4.0-build.1 --values-schema -n tap-install
+    | Retrieving package details for ootb-delivery-basic.tanzu.vmware.com/0.4.0-build.1...
+
+    KEY                  DEFAULT          TYPE    DESCRIPTION
+    service_account      default          string  Name of the service account in the namespace where the Deliverable is submitted to.
+    ```
+
+
+1. Create a `ootb-delivery-values.yaml` using the following sample as a guide.
+
+    Sample `ootb-delivery-values.yaml` for the default Supply Chain:
+
+    ```yaml
+    ---
+    service_account: default
+    ```
+
+1. Install the package by running:
+
+     ```bash
+    tanzu package install ootb-delivery-basic \
+      --package-name ootb-delivery-basic.tanzu.vmware.com \
+      --version 0.4.0-build.1 \
+      --namespace tap-install \
+      --values-file ootb-delivery-values.yaml
+    ```
+
+> **Note:** The `default` service account and required secrets are created in
+[Set Up Developer Namespaces to Use Installed Packages](#setup).
 
 
 ## <a id='install-ootb-supply-chain-basic'></a> Install default Supply Chain
@@ -779,14 +827,14 @@ Install the default Supply Chain, called Out of the Box Supply Chain Basic, by r
 1. Gather the values schema:
 
     ```console
-    tanzu package available get ootb-supply-chain-basic.tanzu.vmware.com/0.3.0-build.5 --values-schema -n tap-install
+    tanzu package available get ootb-supply-chain-basic.tanzu.vmware.com/0.4.0-build.1 --values-schema -n tap-install
     ```
 
     For example:
 
     ```console
-    $ tanzu package available get ootb-supply-chain-basic.tanzu.vmware.com/0.3.0-build.5 --values-schema -n tap-install
-    | Retrieving package details for ootb-supply-chain-basic.tanzu.vmware.com/0.3.0-build.5...
+    $ tanzu package available get ootb-supply-chain-basic.tanzu.vmware.com/0.4.0-build.1 --values-schema -n tap-install
+    | Retrieving package details for ootb-supply-chain-basic.tanzu.vmware.com/0.4.0-build.1...
 
     KEY                  DEFAULT          TYPE    DESCRIPTION
     registry.repository  <nil>            string  Name of the repository in the image registry server where the application images from the workloads should be pushed to (required).
@@ -813,7 +861,7 @@ Install the default Supply Chain, called Out of the Box Supply Chain Basic, by r
      ```bash
     tanzu package install ootb-supply-chain-basic \
       --package-name ootb-supply-chain-basic.tanzu.vmware.com \
-      --version 0.3.0-build.5 \
+      --version 0.4.0-build.1 \
       --namespace tap-install \
       --values-file ootb-supply-chain-values.yaml
     ```
@@ -2211,8 +2259,8 @@ Use the following procedure to verify that the packages are installed.
     grype-scanner            grype.scanning.apps.tanzu.vmware.com               1.0.0-beta.2     Reconcile succeeded
     image-policy-webhook     image-policy-webhook.signing.run.tanzu.vmware.com  1.0.0-beta.1     Reconcile succeeded
     metadata-store           scst-store.tanzu.vmware.com                        1.0.0-beta.1     Reconcile succeeded
-    ootb-supply-chain-basic  ootb-supply-chain-basic.tanzu.vmware.com           0.3.0-build.5    Reconcile succeeded
-    ootb-templates           ootb-templates.tanzu.vmware.com                    0.3.0-build.5    Reconcile succeeded
+    ootb-supply-chain-basic  ootb-supply-chain-basic.tanzu.vmware.com           0.4.0-build.1    Reconcile succeeded
+    ootb-templates           ootb-templates.tanzu.vmware.com                    0.4.0-build.1    Reconcile succeeded
     scan-controller          scanning.apps.tanzu.vmware.com                     1.0.0-beta.2     Reconcile succeeded
     service-bindings         service-bindings.labs.vmware.com                   0.5.0            Reconcile succeeded
     services-toolkit         services-toolkit.tanzu.vmware.com                  0.4.0            Reconcile succeeded
