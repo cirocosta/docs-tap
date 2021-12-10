@@ -3,7 +3,7 @@ title: Out of The Box Supply Chain Basic (ootb-supply-chain-basic)
 weight: 2
 ---
 
-This Cartographe] Supply Chain ties a series of Kubernetes resources which,
+This Cartographer Supply Chain ties a series of Kubernetes resources which,
 when working together, drives a developer-provided Workload from source code
 all the way to a Kubernetes configuration ready to be deployed to a cluster.
 
@@ -297,6 +297,8 @@ Create workload:
      11 + |        branch: main
      12 + |      url: https://github.com/sample-accelerators/tanzu-java-web-app
 ```
+
+##### Private Source Git Repository
 
 In the example above, we make use of a public repository, but, if you want to
 make use of a private repository instead, make sure you create a Secret in the
