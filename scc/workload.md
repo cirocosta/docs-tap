@@ -11,12 +11,13 @@
     the supply chain must exist (e.g., serviceaccount that points at the image
     registry credentials, any scan policies, tekton pipelines for running tests,
     etc).
-  - [`labels`](#labels):
-    - `apps.tanzu.vmware.com/workload-type`:
-    - `app.kubernetes.io/part-of`:
+  - [`labels`](#labels)
+    - `apps.tanzu.vmware.com/workload-type`
+    - `app.kubernetes.io/part-of`
   - [`annotations`](#annotations): foo
 
-- `spec`:
+
+- `spec`
   - [`source`](#source): The location of the source code for the workload
     - [`git`](#git-source):
       - `url`:
@@ -44,7 +45,7 @@
     Cartographer will use the default service account in the workload's
     namespace.
 
-- `status`:
+- `status`
   - `conditions`:
   - `supplyChainRef`:
   - `resources`:
