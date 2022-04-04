@@ -28,7 +28,7 @@ https://cartographer.sh/docs/development/reference/workload/#workload.
       **web** to use out of the box supply chains)
     - `app.kubernetes.io/part-of`: name of the application that this workload
       is part of (required for both TAP GUI and finding logs).
-  - [`annotations`](#annotations): foo
+  - [`annotations`](#annotations): todo (mention knative?)
 - `spec`
   - [`source`](#source): The location of the source code for the workload
     - [`git`](#git-source): Source code location in a git repository.
