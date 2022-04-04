@@ -62,7 +62,7 @@ https://cartographer.sh/docs/development/reference/workload/#workload.
 - `status`
   - `conditions`: describe this resource's reconcile state. The top level
     condition is of type `Ready`, and follows [Kubernetes conditions
-    conventions][kubernetes-api-conventions]:
+    conventions][k8s-api-conventions]:
   - `observedGeneration`: the generation of the spec that resulted in the
     current `status`.
   - `supplyChainRef`: the Supply Chain resource that was used when this status
@@ -84,27 +84,60 @@ https://cartographer.sh/docs/development/reference/workload/#workload.
     - `templateRef`: reference to the template used to create the object in
       StampedRef
 
-[kubernetes-api-conventions]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
+[k8s-api-conventions]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
 
 
-## Labels
+### Labels
 
-- passed down to children
-- `has-tests` for the supply chians that run tests (testing and scanning based
-  when providing sources)
-  - must always have `type: web`
-  - might use `has-tests` depending on the goal and supply chain installed
+The labels applied to a Workload are relevant for two purposes:
+
+1. influencing supply chain selection
+1. passing labels down to children resources
+
+At any point in time, multiple supply chains might be installed in a cluster as
+long as their names don't conflict and the rules they specify for matching
+Workloads don't conflict (after all, ClusterSupplyChain objects are
+cluster-scoped).
+
+Labels are one of the factors taken into consideration when deciding which
+ClusterSupplyChain to reconcile against. Regardless of the supply chain package
+installed, at the moment all TAP supply chains require the
+`apps.tanzu.vmware.com/workload-type: web` label to be set.
+
+Additionally, supply chain packages that provide testing functionality (e.g.,
+`ootb-supply-chain-testing` and `ootb-supply-chain-testing-scanning`) provide
+supply chains that match against both
+
+- `apps.tanzu.vmware.com/workload-type: web`, **and**
+- `apps.tanzu.vmware.com/has-tests: true`
+
+To summarize:
+
+- `ootb-supply-chain-basic`
+  - label `apps.tanzu.vmware.com/workload-type: web`
+- `ootb-supply-chain-testing`
+  - label `apps.tanzu.vmware.com/workload-type: web`
+  - label `apps.tanzu.vmware.com/has-tests: true`
+- `ootb-supply-chain-testing-scanning`
+  - label `apps.tanzu.vmware.com/workload-type: web`
+  - label `apps.tanzu.vmware.com/has-tests: true`
+
+With regards to passing labels down to children resources, it's important to
+note the `app.kubernetes.io/part-of` label. This is one of the [Kubernetes
+recommended labels][k8s-recommended-labels] that allows one to name the
+higher-level application this is part of, which is used by other components
+like TAP GUI and the Tanzu CLI to appropriately group this workload and its
+children when querying Kubernetes for data.
 
 
-## Annotations
-
-- the knative one gets passed down to the knative service? be more exact about
-  what goes down
-
-- param `annotations`
+[k8s-recommended-labels]: https://kubernetes.io/docs/concepts/overview/working-with-objects/common-labels/
 
 
-## Source
+### Annotations
+
+Annotations
+
+### Source
 
 can come from either git or local directory
 
@@ -112,11 +145,11 @@ can come from either git or local directory
 
 see more at [git source](./building-from-source.md#git-source).
 
-### Image source
+#### Image source
 
 see more at [local source](./building-from-source.md#local-source).
 
-## Pre-built image
+### Pre-built image
 
 rather than providing source code to be built, it's possible to bring your own
 image.
@@ -124,7 +157,7 @@ image.
 see more at [pre-built image](./pre-build-image.md).
 
 
-## Parameters
+### Parameters
 
 the ootb packages bring supply chains with pre-configured defaults, but some of
 those configurations can be tweaked by the one submitting the Workload to the
@@ -133,13 +166,11 @@ cluster.
 ... where do we provid
 
 
-## ServiceClaims
+### ServiceClaims
 
 
-## Examples
+# to cover
      
-
-
 - parameters
   - `gitops_...`
   - annotations for knative

@@ -1,6 +1,6 @@
 # Pre-built image
 
-For those applications that already have a defined way of building their
+For those applications that already have a predefined way of building their
 container images, the supply chains included in the Out of the Box packages
 provide the ability for specifying a pre-built image to be used in the final
 application while still going through the same set of stages as any other
@@ -59,7 +59,7 @@ For instance, let's create a Workload using an image named `hello-world`,
 tagged `tanzu-java-web-app` hosted under `ghcr.io` in the `kontinue`
 repository:
 
-```
+```bash
 tanzu apps workload create tanzu-java-web-app \
   --app tanzu-java-web-app \
   --type web \
@@ -84,7 +84,6 @@ inspecting the Workload status (more specifically,
 `workload.status.resources`), we can see the `image-provider` resource
 promoting to further resources the image it found:
 
-
 ```yaml
 apiVersion: carto.run/v1alpha1
 kind: Workload
@@ -99,7 +98,7 @@ status:
         #
         - name: image
           lastTransitionTime: "2022-04-01T15:05:01Z"
-          preview: ghcr.io/kontinue/hello-world:tanzu-java-web-app@sha256:9fb930acce8d33277cd323a6e9528d1e67bded9e05e02432fadebf43b276bb44
+          preview: ghcr.io/kontinue/hello-world:tanzu-java-web-app@sha256:9fb930a...
 
       # reference to the object managed by the supply chain for this
       # resource
@@ -119,14 +118,26 @@ status:
         name: image-provider-template
 ```
 
+That image found the ImageRepository is then carried through the supply chain
+all the way to the final configuration that gets pushed to a git repository or
+image registry so that it can be deployed in a run cluster.
 
 
-## Dockerfile example
+## Examples
 
-1. create a dockerfile that describes the building of our artifact and how to
-   run it
+Aside from the gotchas outlined, it's mostly transparent to the supply chain
+how one came up with the image being provided.
 
-```
+In the examples below we shouldcase a couple ways that one could end up
+building container images for a Java-based application and having it carried
+through the supply chains all the way to a running service.
+
+### Dockerfile
+
+1. create a Dockerfile that describes how to build our application and make it
+   available as a container image
+
+```Dockerfile
 ARG BUILDER_IMAGE=maven
 ARG RUNTIME_IMAGE=gcr.io/distroless/java17-debian11
 
@@ -154,7 +165,6 @@ docker push $IMAGE_IMAGE
 
 3. create a workload that makes use of it
 
-
 ```bash
 tanzu apps workload create tanzu-java-web-app \
   --type web \
@@ -179,7 +189,12 @@ Create workload:
 4. observe that we get it running
 
 
-## `pack` example
+## spring maven docker
+
+TODO
+
+
+## buildpacks
 
 ```
 git clone https://github.com/sample-accelerators/tanzu-java-web-app
