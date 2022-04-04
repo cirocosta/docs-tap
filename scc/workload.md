@@ -29,16 +29,16 @@ https://cartographer.sh/docs/development/reference/workload/#workload.
   - [`annotations`](#annotations): foo
 - `spec`
   - [`source`](#source): The location of the source code for the workload
-		- `subPath`: Subpath inside the Git repository or Image to treat as the
-			root of the application. Defaults to the root if left empty.
+    - `subPath`: Subpath inside the Git repository or Image to treat as the
+      root of the application. Defaults to the root if left empty.
     - [`git`](#git-source): Source code location in a git repository.
       - `url`
       - `ref`
         - `branch`
         - `commit`
         - `tag`
-		- [`image`](#image-source): OCI Image in a repository, containing the
-			source code to be used throughout the supply chain.
+    - [`image`](#image-source): OCI Image in a repository, containing the
+      source code to be used throughout the supply chain.
   - [`image`](#pre-built-image): A pre-built image in a registry. It is an alternative to
     specifying the location of source code for the workload. Specify one of
     `spec.source` or `spec.image`
@@ -58,7 +58,7 @@ https://cartographer.sh/docs/development/reference/workload/#workload.
     Cartographer will use the default service account in the workload's
     namespace.
 - `status`
-	- `conditions`: describe this resource's reconcile state. The top level
+  - `conditions`: describe this resource's reconcile state. The top level
     condition is of type `Ready`, and follows [Kubernetes conditions
     conventions][kubernetes-api-conventions]:
   - `observedGeneration`: the generation of the spec that resulted in the
