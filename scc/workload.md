@@ -15,8 +15,6 @@
     - `apps.tanzu.vmware.com/workload-type`
     - `app.kubernetes.io/part-of`
   - [`annotations`](#annotations): foo
-
-
 - `spec`
   - [`source`](#source): The location of the source code for the workload
     - [`git`](#git-source):
@@ -44,7 +42,6 @@
     use serviceAccountName from supply chain. If that is also not set, 
     Cartographer will use the default service account in the workload's
     namespace.
-
 - `status`
   - `conditions`:
   - `supplyChainRef`:
