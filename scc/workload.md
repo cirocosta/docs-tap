@@ -24,8 +24,10 @@ https://cartographer.sh/docs/development/reference/workload/#workload.
     etc).
   - [`labels`](#labels): set of labels to be used to matching the Workload with
     a supply chain as well as be passed down to children objects
-    - `apps.tanzu.vmware.com/workload-type`
-    - `app.kubernetes.io/part-of`
+    - `apps.tanzu.vmware.com/workload-type`: type of workload (must be set to
+      **web** to use out of the box supply chains)
+    - `app.kubernetes.io/part-of`: name of the application that this workload
+      is part of (required for both TAP GUI and finding logs).
   - [`annotations`](#annotations): foo
 - `spec`
   - [`source`](#source): The location of the source code for the workload
