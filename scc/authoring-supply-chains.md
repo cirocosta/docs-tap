@@ -1,5 +1,6 @@
 # Authoring Supply Chains
 
+
 ## TAP
 
 * TAP-specific details (pause package installation .. renaming ...)
@@ -23,10 +24,7 @@
 
 
 
-
-
 ## Cartographer
 
-* changes to a supply chain: goto tutorial
 
-
+https://cartographer.sh/docs/development/tutorials/first-supply-chain/

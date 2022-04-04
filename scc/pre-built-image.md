@@ -2,26 +2,30 @@
 
 For those applications that already have a defined way of building their
 container images, the supply chains included in the Out of the Box packages
-provide the ability for specifying a pre-built image that should be used in the
-final application while still going through the same set of stages as any other
-workload.
+provide the ability for specifying a pre-built image to be used in the final
+application while still going through the same set of stages as any other
+Workload.
+
 
 ## Workload
 
-To specify a pre-built image, the `workoad.spec.image` field should be set.
+To specify a pre-built image, the `workoad.spec.image` field should be set to
+the name of the container image that contains the application to be deployed.
 
 Using the Tanzu CLI, that means leveraging the `--image` field of `tanzu apps
-workload create`. For instance, assuming we have an image named `IMAGE`:
+workload create`:
 
 - `--image`: pre-built image, skips the source resolution and build phases of
   the supply chain
 
+For instance, assuming we have an image named `IMAGE`, we can create a workload
+making use of the flag mentioned above:
+
 ```bash
 tanzu apps workload create tanzu-java-web-app \
+  --app tanzu-java-web-app \
   --type web \
-  --label app.kubernetes.io/part-of=tanzu-java-web-app \
-  --image ghcr.io/kontinue/hello-world:tanzu-java-web-app \
-  --namespace workload
+  --image IMAGE
 ```
 ```console
 Create workload:
@@ -35,8 +39,9 @@ Create workload:
       8 + |  name: tanzu-java-web-app
       9 + |  namespace: default
      10 + |spec:
-     11 + |  image: ghcr.io/kontinue/hello-world:tanzu-java-web-app
+     11 + |  image: IMAGE
 ```
+
 
 ## How it works
 
@@ -44,11 +49,28 @@ Under the hood, an `ImageRepository` object will be created to keep track of
 new images pushed under that name, making available to further resources in the
 supply chain the final digest-based of the latest it found.
 
-Using `ootb-supply-chain-basic` as an example and the Workload above, we should
-see the following object hierarchy formed:
+Whenever a new image is pushed under that image name, the ImageRepository
+object will detect it, and then make it available to further resources by
+updating its own `imagerepository.status.artifact.revision` with the absolute
+name of that image (i.e., the image name including the digest of the latest one
+found).
+
+For instance, let's create a Workload using an image named `hello-world`,
+tagged `tanzu-java-web-app` hosted under `ghcr.io` in the `kontinue`
+repository:
 
 ```
-NAME
+tanzu apps workload create tanzu-java-web-app \
+  --app tanzu-java-web-app \
+  --type web \
+  --image ghcr.io/kontinue/hello-world:tanzu-java-web-app
+```
+
+After a couple seconds, we should see the ImageRepository created for keeping
+track of images named `ghcr.io/kontinue/hello-world:tanzu-java-web-app`
+
+
+```scala
 Workload/tanzu-java-web-app
 ├─ImageRepository/tanzu-java-web-app
 ├─PodIntent/tanzu-java-web-app
@@ -58,28 +80,43 @@ Workload/tanzu-java-web-app
     └─Pod/tanzu-java-web-app-config-writer-p2lzv-pod
 ```
 
+inspecting the Workload status (more specifically,
+`workload.status.resources`), we can see the `image-provider` resource
+promoting to further resources the image it found:
+
+
 ```yaml
 apiVersion: carto.run/v1alpha1
 kind: Workload
 spec:
   image: ghcr.io/kontinue/hello-world:tanzu-java-web-app
 status:
-  # ...
   resources:
-  - name: image-provider
-    outputs:
-    - name: image
-      lastTransitionTime: "2022-04-01T15:05:01Z"
-      preview: ghcr.io/kontinue/hello-world:tanzu-java-web-app@sha256:9fb930acce8d33277cd323a6e9528d1e67bded9e05e02432fadebf43b276bb44
-    stampedRef:
-      apiVersion: source.apps.tanzu.vmware.com/v1alpha1
-      kind: ImageRepository
-      name: tanzu-java-web-app
-      namespace: workload
-    templateRef:
-      apiVersion: carto.run/v1alpha1
-      kind: ClusterImageTemplate
-      name: image-provider-template
+    - name: image-provider
+      outputs:
+        # output being made available to further resources in the supply chain
+        # (in this case, the latest image it found under that name).
+        #
+        - name: image
+          lastTransitionTime: "2022-04-01T15:05:01Z"
+          preview: ghcr.io/kontinue/hello-world:tanzu-java-web-app@sha256:9fb930acce8d33277cd323a6e9528d1e67bded9e05e02432fadebf43b276bb44
+
+      # reference to the object managed by the supply chain for this
+      # resource
+      #
+      stampedRef:
+        apiVersion: source.apps.tanzu.vmware.com/v1alpha1
+        kind: ImageRepository
+        name: tanzu-java-web-app
+        namespace: workload
+      
+      # reference to the template that defined how this object should look
+      # like
+      #
+      templateRef:
+        apiVersion: carto.run/v1alpha1
+        kind: ClusterImageTemplate
+        name: image-provider-template
 ```
 
 
@@ -154,6 +191,12 @@ pack build ghcr.io/kontinue/hello-world:tanzu-java-web-app-pack --builder cnbs/s
 
 As the supply chains still aim at Knative as the runtime for the container
 image provided, the application must adhere to Knative standards:
+
+
+- the image WILL NOT be relocated to the internal image registry, so, any
+  components that end up touching the image must have the necessary credentials
+  for pulling it.
+
 
 - must listen on port 8080 on all interfaces (0.0.0.0:8080)
 

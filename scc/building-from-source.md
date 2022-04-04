@@ -54,7 +54,22 @@ parameters:
 
 ### Private git repository
 
+secret must be provided
+
+- `gitops_ssh_secret` set to the name of the secret to be referenced
+
+
 #### HTTP-based auth
 
+secret
+
+```
+```
+
 #### SSH auth
+
+secret
+
+```
+```
 
