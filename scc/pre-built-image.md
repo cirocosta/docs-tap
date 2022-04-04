@@ -13,6 +13,9 @@ To specify a pre-built image, the `workoad.spec.image` field should be set.
 Using the Tanzu CLI, that means leveraging the `--image` field of `tanzu apps
 workload create`. For instance, assuming we have an image named `IMAGE`:
 
+- `--image`: pre-built image, skips the source resolution and build phases of
+  the supply chain
+
 ```bash
 tanzu apps workload create tanzu-java-web-app \
   --type web \
@@ -79,35 +82,6 @@ status:
       name: image-provider-template
 ```
 
-
-## Gotchas
-
-As the supply chains still aim at Knative as the runtime for the container
-image provided, the application must adhere to Knative standards:
-
-- must listen on port 8080 on all interfaces (0.0.0.0:8080)
-
-```
-ports:
-  - containerPort: 8080
-    name: user-port
-    protocol: TCP
-```
-
-- must be possible to run as user 1000
-
-```
-securityContext:
-  runAsUser: 1000
-```
-
-- gracefully support scaling to zero
-
-```
-metadata:
-  annotations:
-    autoscaling.knative.dev/minScale: "1"
-```
 
 
 ## Dockerfile example
@@ -176,5 +150,31 @@ pack build ghcr.io/kontinue/hello-world:tanzu-java-web-app-pack --builder cnbs/s
 ```
 
 
+## Gotchas
 
+As the supply chains still aim at Knative as the runtime for the container
+image provided, the application must adhere to Knative standards:
 
+- must listen on port 8080 on all interfaces (0.0.0.0:8080)
+
+```
+ports:
+  - containerPort: 8080
+    name: user-port
+    protocol: TCP
+```
+
+- must be possible to run as user 1000
+
+```
+securityContext:
+  runAsUser: 1000
+```
+
+- gracefully support scaling to zero
+
+```
+metadata:
+  annotations:
+    autoscaling.knative.dev/minScale: "1"
+```
