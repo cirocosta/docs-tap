@@ -29,14 +29,14 @@ https://cartographer.sh/docs/development/reference/workload/#workload.
   - [`annotations`](#annotations): foo
 - `spec`
   - [`source`](#source): The location of the source code for the workload
-    - [`git`](#git-source): Source code location in a git repository.
-      - `url`:
-      - `ref`:
-        - `branch`:
-        - `commit`:
-        - `tag`:
 		- `subPath`: Subpath inside the Git repository or Image to treat as the
 			root of the application. Defaults to the root if left empty.
+    - [`git`](#git-source): Source code location in a git repository.
+      - `url`
+      - `ref`
+        - `branch`
+        - `commit`
+        - `tag`
 		- [`image`](#image-source): OCI Image in a repository, containing the
 			source code to be used throughout the supply chain.
   - [`image`](#pre-built-image): A pre-built image in a registry. It is an alternative to
