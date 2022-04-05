@@ -189,9 +189,11 @@ Create workload:
 4. observe that we get it running
 
 
-## spring maven docker
+## spring's build-image target
 
-TODO
+```
+./mvnw spring-boot:build-image -Dspring-boot.build-image.imageName=myorg/myapp
+```
 
 
 ## buildpacks

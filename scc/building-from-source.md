@@ -48,26 +48,30 @@ Create workload:
      15 + |      url: https://github.com/sample-accelerators/tanzu-java-web-app
 ```
 
+note: the git repository URL must include the scheme (`http://`, `https://`, or
+`ssh://`).
+
 
 ### How it works
 
-With the `git` field under `spec.source` filled, the supply chain takes care of
-creating a child GitRepository object that keeps track of commits made to the
-git repository stated in `workload.spec.source.git`, which in turn makes
-available for further components in the supply chain the latest commits made to
-that branch in that repository via an HTTP-based URL that can be reached within
-the cluster.
-
-- `serviceAccount`:
-- `gitImplementation`:
-- `gitops_ssh_secret`:
+With the `git` field under `workload.spec.source` filled, the supply chain
+takes care of creating a child GitRepository object that keeps track of commits
+made to the git repository stated in `workload.spec.source.git`, which in turn
+makes available for further components in the supply chain the latest commits
+made to that branch in that repository via an HTTP-based URL that can be
+reached within the cluster.
 
 
 ### Private git repository
 
-secret must be provided
+To fetch source code from a repository that required credentials, one must
+provide those via a secret that's referenced by the GitRepostiory object
+created.
 
-- `gitops_ssh_secret` set to the name of the secret to be referenced
+Platform operators can customize the default name of the secret during TAP
+installation time via the `gitops.ssh_secret` field, or being supplied in each
+Workload in the `gitops_ssh_secret` parameter where the name of the secret
+should be passed.
 
 
 #### HTTP-based auth
@@ -84,7 +88,18 @@ secret
 ```
 ```
 
+### Related Parameters
 
+There are a couple of parameters that can be passed via the Workload object's
+`workload.spec.params` field to override the default behavior of the
+GitRepository object created for keeping track of the changes to a repository.
+
+These are:
+
+- `gitImplementation`: name of the git implementation (one of `libgit2` or
+  `go-git`) to be used for fetching the source code
+- `gitops_ssh_secret`: name of the secret in the same namespace as the Workload
+  where credentials to for fetching the repository can be found.
 
 
 ## Local source
