@@ -6,9 +6,10 @@ definition of the shape of such resources defined by templates.
 
 This package contains a series of reusable templates used by:
 
+* [Out of the Box Delivery Basic](ootb-delivery-basic.html)
 * [Out of the Box Supply Chain Basic](ootb-supply-chain-basic.html)
 * [Out of the Box Supply Chain with Testing](ootb-supply-chain-testing.html)
 * [Out of the Box Supply Chain with Testing and Scanning](ootb-supply-chain-testing-scanning.html)
 
-As a prerequisite of the Out of the Box Supply Chains, you must install this package to have
-Workloads delivered properly.
+As a prerequisite of the Out of the Box Supply Chains, you must install this
+package to have Workloads and Deliverables properly configured.
