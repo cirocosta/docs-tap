@@ -1,0 +1,1 @@
+- improve documentation for switching between a supply chain to another

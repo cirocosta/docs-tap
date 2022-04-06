@@ -285,7 +285,8 @@ tanzu-java-web-app: digest: sha256:7140722ea396af69fb3d0ad12e9b4419bc3e67d9c5d8a
 Having pushed the container image, we should see the same results as in the
 section above where we build the image with a `Dockerfile`.
 
-To know more about building container images for Spring Boot application, make sure you check out [Spring Boot with Docker][sboot-docker]
+To know more about building container images for Spring Boot application, make
+sure you check out [Spring Boot with Docker][sboot-docker]
 
 [sboot-docker]: https://spring.io/guides/gs/spring-boot-docker
 
@@ -296,7 +297,8 @@ As the supply chains still aim at Knative as the runtime for the container
 image provided, the application must adhere to Knative standards when it comes
 to bringing the container up and serving traffic to it:
 
-- the application must listen on port 8080 on all interfaces (0.0.0.0:8080)
+
+- **Listen on port 8080**
 
 The Knative service gets created with the pod template spec being set to have
 the container port set to 8080, so it's expected that regardless of how the
@@ -309,22 +311,31 @@ ports:
     protocol: TCP
 ```
 
-- Must be possible to run the application as user 1000 
+
+- **Non-privileged user ID**
+
+By default, the container instiated as part of the pod will be ran as user
+1000.
 
 ```
 securityContext:
   runAsUser: 1000
 ```
 
-- Must not need extra arguments other than the image's entrypoint
+
+- **Arguments other than the image's default entrypoint**
 
 Because there is no way of supplying arguments down to the pod template spec
 that will be used in the Knative service, it's expected that the container
 image is able to run based solely on the default entrypoint configured for it
 (in the case of Dockerfiles, the combination of ENTRYPOINT and CMD).
 
+In case extra configuration should be provided, environment variables can be
+used (see `--env` flags in `tanzu apps workload create` or
+`workload.spec.env`).
 
-- Credentials for pulling the container image at run time
+
+- **Credentials for pulling the container image at runtime**
 
 The image provided will not be relocated to an internal image registry, so, any
 components that end up touching the image must have the necessary credentials
