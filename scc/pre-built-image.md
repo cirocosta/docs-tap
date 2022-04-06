@@ -318,18 +318,21 @@ securityContext:
 
 - Must not need extra arguments other than the image's entrypoint
 
-```
-```
-
-- gracefully support scaling to zero
-
-```
-metadata:
-  annotations:
-    autoscaling.knative.dev/minScale: "1"
-```
+Because there is no way of supplying arguments down to the pod template spec
+that will be used in the Knative service, it's expected that the container
+image is able to run based solely on the default entrypoint configured for it
+(in the case of Dockerfiles, the combination of ENTRYPOINT and CMD).
 
 
-- the image WILL NOT be relocated to the internal image registry, so, any
-  components that end up touching the image must have the necessary credentials
-  for pulling it.
+- Credentials for pulling the container image at run time
+
+The image provided will not be relocated to an internal image registry, so, any
+components that end up touching the image must have the necessary credentials
+for pulling it. In practice, that means attaching to the serviceaccounts used
+for both Workload and Deliverable a secret that contains the credentials to
+pull that container image.
+
+Similarly, if the image is hosted in a registry whose certificates have been
+signed by a private certificate authority, then not only the components of the
+supply chains and delivery must trust it, but also the Kubernetes nodes in the
+run cluster.
