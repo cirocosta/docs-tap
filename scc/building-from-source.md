@@ -66,10 +66,13 @@ provide those via a Kubernetes Secret object that's referenced by the
 works](#how-it-works) to know more about the underlying process of detecting
 changes to the repository).
 
-```
+```scala
 Workload/tanzu-java-web-app
 └─GitRepository/tanzu-java-web-app  
-                   └───────────> `secretRef: {name: <secret_name>}`
+                   └───────> secretRef: {name: SECRET-NAME}
+                                                   |
+                                      either a default from TAP installation or
+                                           gitops_ssh_secret Workload parameter
 ```
 
 Platform operators that installed the Out of the Box Supply Chain packages
@@ -77,7 +80,7 @@ using TAP profiles can customize the default name of the secret (`git-ssh`, by
 default) by tweaking the corresponding `ootb_supply_chain*` property in the
 `tap-values.yml` file:
 
-```
+```yaml
 ootb_supply_chain_basic:
   gitops:
     ssh_secret: SECRET-NAME
@@ -87,7 +90,7 @@ For those that installed the `ootb-supply-chain-*` package individually via
 `tanzu package install`, one can tweak the `ootb-supply-chain-*-values.yml` as
 such:
 
-```
+```yaml
 gitops:
   ssh_secret: SECRET-NAME
 ```
