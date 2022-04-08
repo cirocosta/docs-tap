@@ -194,14 +194,12 @@ stringData:
 
 #### SSH auth
 
-Aside from HTTP, it's also possible to make use of SSH as the underlying
-transport for Git. 
+Aside from using HTTP(S) as a transport, it's also possible to make use of SSH.
 
-First make sure that the repository in the Workload spec makes use of `ssh://`
-as the scheme in the URL (e.g., `ssh://git@github.com:my-org/my-repo.git`).
-Then, create a Kubernetes Secret object of type `kubernetes.io/ssh-auth` like
-so:
-
+First make sure that the repository URL in the Workload spec makes use of
+`ssh://` as the scheme in the URL (e.g.,
+`ssh://git@github.com:my-org/my-repo.git`).  Then, create a Kubernetes Secret
+object of type `kubernetes.io/ssh-auth` like so:
 
 ```yaml
 apiVersion: v1
@@ -215,30 +213,33 @@ stringData:
   identity.pub: string            # public key of the `identity` key pair
 ```
 
-1. generate a new key pair (`identity` and `identity.pub`)
 
-Once done, head to your git provider and add the `identity.pub` as a deployment
-key for the repository of interest or add to an account that has access to it.
-for instance, for github: `https://github.com/<repository>/settings/keys/new`.
 
-```bash
-ssh-keygen -t ecdsa -b 521 -C "" -f "identity" -N ""
-```
+1. Generate a new SSH key pair (`identity` and `identity.pub`)
+
+  ```bash
+  ssh-keygen -t ecdsa -b 521 -C "" -f "identity" -N ""
+  ```
+
+  Once done, head to your git provider and add the `identity.pub` as a
+  deployment key for the repository of interest or add to an account that has
+  access to it.  for instance, for github:
+  `https://github.com/<repository>/settings/keys/new`.
 
 1. gather public keys from the provider (e.g., github):
 
-```bash
-ssh-keyscan github.com > ./known_hosts
-```
+  ```bash
+  ssh-keyscan github.com > ./known_hosts
+  ```
 
-1. create the secret:
+1. Create the Kubernetes Secret based using the contents of the files above:
 
-```bash
-kubectl create secret generic git-ssh \
-    --from-file=./identity \
-    --from-file=./identity.pub \
-    --from-file=./known_hosts
-```
+  ```bash
+  kubectl create secret generic git-ssh \
+      --from-file=./identity \
+      --from-file=./identity.pub \
+      --from-file=./known_hosts
+  ```
 
 ### How it works
 
