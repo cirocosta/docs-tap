@@ -11,7 +11,42 @@ achieving such customization of the out of the box supply chains.
 
 Below you'll find sections covering different setups and how to proceed.
 
-## Modifying a a supplychain from ootb-supply-chain-
+## Providing your own supply chain
+
+To create a supply chain from scratch and make it available for Workloads, all
+that's required is making sure that the supply chain does not conflict with the
+ones that are installed in the cluster, after all, those objects are
+cluster-scoped.
+
+That said, it's important to observe the two possible collisions:
+
+- **object name**: as mentioned before, supply chains (ClusterSupplyChain
+  resource) are cluster scoped (just like any Cartographer resource prefixed
+  with `Cluster`), so the name of the custom supply chain must be different
+  from the ones the Out of the Box packages provide
+
+  currently, the following supply chains are provided by the corresponding
+  packages:
+
+    - ootb-supply-chain-basic:
+      - basic-image-to-url
+      - source-to-url
+
+    - ootb-supply-chain-testing
+        - testing-image-to-url
+        - source-test-to-url
+
+    - ootb-supply-chain-testing-scanning
+        - scanning-image-scan-to-url
+        - source-test-scan-to-url
+
+- **workload selection**: a Workload gets reconciled against a particular
+  supply chain based on a set of selection rules as defined by the supply
+  chains. If the rules for the supply chain to match a Workload is ambiguous,
+  the Workload will not make any progress.
+
+
+## Modifying a supplychain from ootb-supply-chain-
 
 In case either the shape of a supply chain or the templates that it points at
 should be changed, a few steps should be followed.
@@ -87,7 +122,7 @@ modification to is the `source-to-url` provided by the
     ```
 
 4. Submit the supply chain to Kubernetes
-    
+
     The supply chain definition found in the bundle expects some values (the
     ones one provide via `tap-values.yml`) to be interpolated via YTT before
     being submitted to Kubernetes, so before applying the modified supply chain
@@ -155,7 +190,7 @@ Suppose that we ...
     ```
 
 4. Observe that we've downloaded all the templates
-    
+
     ```bash
     tree ./ootb-templates
     ```
