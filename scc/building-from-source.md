@@ -93,8 +93,9 @@ gitops:
 ```
 
 Ultimately, it's also possible to override the default secret name directly in
-the Workload by leveraging the `gitops_ssh_secret` parameter. Using the Tanzu
-CLI, that can be done with the `--param` flag. For instance:
+the Workload by leveraging the `gitops_ssh_secret` parameter, regardless of how
+TAP has been installed. Using the Tanzu CLI, that can be done with the
+`--param` flag. For instance:
 
 ```bash
 tanzu apps workload create tanzu-java-web-app \
@@ -117,8 +118,8 @@ Create workload:
       9 + |  namespace: default
      10 + |spec:
      11 + |  params:
-     12 + |  - name: gitops_ssh_secret			#! parameter
-     13 + |    value: SECRET-NAME
+     12 + |  - name: gitops_ssh_secret	#! parameter that overrides the default
+     13 + |    value: SECRET-NAME       #! secret name
      14 + |  source:
      15 + |    git:
      16 + |      ref:
@@ -126,26 +127,77 @@ Create workload:
      18 + |      url: https://github.com/sample-accelerators/tanzu-java-web-app
 ```
 
+> **Note:** a secret reference will only be provided to GitRepository if
+> `gitops_ssh_secret` has been set to a non-empty string in some fashion
+> (either package property or workload parameter). If you need to force a
+> GitRepository to not reference a secret, set the value to an empty string
+> (`""`).
+
+With the name of secret defined, we can move on to the definition of the secret
+itself.
+
 
 #### HTTP-based auth
 
-Despite both the package value and parameter being called `gitops_ssh_secret`,
-it's possible to make use of HTTP(S) transports just as well.
+Despite both the Package value being called `gitops.ssh_secret` and Workload
+parameter `gitops_ssh_secret`, it's possible to make use of HTTP(S) transports
+just as well.
+
+To do so, first make sure that the repository in the Workload spec makes use of
+http OR https scheme in the URL (e.g., `https://github.com/my-org/my-repo`).
+Then, create a Kubernetes Secret object of type `kubernetes.io/basic-auth` like
+so:
+
 
 ```yaml
 apiVersion: v1
 kind: Secret
 metadata:
-  name: git-http
-  annotations:
-    tekton.dev/git-0: https://github.com
+  name: git-credentials
 type: kubernetes.io/basic-auth
 stringData:
-  username: admin
-  password: admin
+  username: GIT-USERNAME
+  password: GIT-PASSWORD
 ```
 
+> **Note:** when leveraging the GitOps workflow for the supply chains (see
+> [GitOps vs RegistryOps](gitops-vs-regops.md)) with HTTP-based authentication,
+> an extra annotation (`tekton.dev/git-0: <git-server-address>`) must be
+> included.
+
+
+For instance, assuming we have a repository called `kontinue/hello-world` in
+GitHub that requires authentication and that we have an access token with the
+privileges of reading the contents of the repository, we can create the Secret
+as follows:
+
+```
+apiVersion: v1
+kind: Secret
+metadata:
+  name: git-credentials
+type: kubernetes.io/basic-auth
+stringData:
+  username: ""
+  password: GITHUB-ACCESS-TOKEN
+```
+
+> **Note** In the example above we use an access token because GitHub
+> deprecated basic auth with plain username and password. See [GitHub
+> docs][gh-creating-access-token] to know more.
+
+[gh-creating-access-token]: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
+
+
 #### SSH auth
+
+Aside from HTTP, it's also possible to make use of SSH as the underlying
+transport for Git. 
+
+First make sure that the repository in the Workload spec makes use of `ssh://`
+as the scheme in the URL (e.g., `ssh://git@github.com:my-org/my-repo.git`).
+Then, create a Kubernetes Secret object of type `kubernetes.io/ssh-auth` like
+so:
 
 
 ```yaml
@@ -157,29 +209,26 @@ type: kubernetes.io/ssh-auth
 stringData:
   known_hosts: string             # git server public keys
   identity: string                # private key with pull permissions
-  identity.pub: string            # public of the `identity` private key
+  identity.pub: string            # public key of the `identity` key pair
 ```
 
 1. generate a new key pair (`identity` and `identity.pub`)
 
-
-once done, head to your git provider and add the `identity.pub` as a deployment
+Once done, head to your git provider and add the `identity.pub` as a deployment
 key for the repository of interest or add to an account that has access to it.
 for instance, for github: `https://github.com/<repository>/settings/keys/new`.
 
 ```bash
-ssh-keygen -t rsa -q -b 4096 -f "identity" -N "" -C ""
+ssh-keygen -t ecdsa -b 521 -C "" -f "identity" -N ""
 ```
 
-
-gather public keys from the provider (e.g., github):
+1. gather public keys from the provider (e.g., github):
 
 ```bash
 ssh-keyscan github.com > ./known_hosts
 ```
 
-
-create the secret:
+1. create the secret:
 
 ```bash
 kubectl create secret generic git-ssh \
