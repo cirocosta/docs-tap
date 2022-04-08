@@ -2,14 +2,12 @@
 
 For those applications that already have a predefined way of building their
 container images, the supply chains included in the Out of the Box packages
-provide the ability for specifying a pre-built image to be used in the final
-application while still going through the same set of stages as any other
-Workload.
-
+support specifying a pre-built image to be used in the final application while
+still going through the same set of stages as any other Workload.
 
 ## Workload
 
-To specify a pre-built image, the `workoad.spec.image` field should be set to
+To specify a pre-built image, the `workoad.spec.image` field should be set with
 the name of the container image that contains the application to be deployed.
 
 Using the Tanzu CLI, that means leveraging the `--image` field of `tanzu apps
@@ -45,8 +43,72 @@ Create workload:
      11 + |  image: IMAGE
 ```
 
+## Out of the Box Supply Chains
+
+In TAP v1.1, the three packages that relate to supply chains
+(`ootb-supply-chain-basic`, `ootb-supply-chain-testing`, and
+`ootb-supply-chain-testing-scanning`) have each received the addition of a new
+supply chain that allows one to provide a pre-built container image for their
+application, taking the process of building the image out of the flow.
+
+```
+ootb-supply-chain-basic
+
+    (cluster)  basic-image-to-url   ClusterSupplyChain            (!) new
+    ^          source-to-url        ClusterSupplyChain
+
+
+ootb-supply-chain-testing
+
+    (cluster)  testing-image-to-url  ClusterSupplyChain           (!) new
+    ^          source-test-to-url    ClusterSupplyChain
+
+
+ootb-supply-chain-testing-scanning
+
+    (cluster)  scanning-image-scan-to-url    ClusterSupplyChain   (!) new
+    ^          source-test-scan-to-url       ClusterSupplyChain
+```
+
+To leverage the supply chains that expect a pre-built image, the only change to
+the Workload is that the `workoad.spec.image` field should be set to the name
+of the container image that brings the application to be deployed.
+
+That's because those new supply chains make use of a new Cartographer feature
+from that lets us increase the specificity of supply chain selection by
+leveraging the `matchFields` selector rule. In summary, the selection takes
+place as follow:
+
+- _ootb-supply-chain-basic_
+  - from source: label `apps.tanzu.vmware.com/workload-type: web`
+  - pre-built image: label `apps.tanzu.vmware.com/workload-type: web` **and**
+    `workload.spec.image` set
+
+- _ootb-supply-chain-testing_
+  - from source: labels `apps.tanzu.vmware.com/workload-type: web` and
+    `apps.tanzu.vmware.com/has-tests: true`
+  - pre-built image: label `apps.tanzu.vmware.com/workload-type: web` **and**
+    `workload.spec.image` set
+
+- _ootb-supply-chain-testing-scanning_
+  - from source: labels `apps.tanzu.vmware.com/workload-type: web` and
+    `apps.tanzu.vmware.com/has-tests: true`
+  - pre-built image: label `apps.tanzu.vmware.com/workload-type: web` **and**
+    `workload.spec.image` set
+
+
+To summarize: Workloads that already work with the supply chains pre TAP 1.1.0
+will continue working matching against the same supply chain as before.
+Workloads that want to bring a pre-built container image should set
+`workload.spec.image`.
+
+
 
 ## How it works
+
+### Multiple supply chains
+
+### ImageRepository
 
 Under the hood, an `ImageRepository` object will be created to keep track of
 new images pushed under that name, making available to further resources in the
