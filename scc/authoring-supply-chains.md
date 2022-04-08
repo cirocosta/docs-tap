@@ -32,12 +32,12 @@ modification to is the `source-to-url` provided by the
 1. Find out the image that contains the supply chain definition
 
     ```bash
-		kubectl get app ootb-supply-chain-basic \
+    kubectl get app ootb-supply-chain-basic \
       -n tap-install \
       -o jsonpath={.spec.fetch[0].imgpkgBundle.image}
     ```
     ```console
-		registry.tanzu.vmware.com/tanzu-application-platform/tap-packages@sha256:f2ad401bb3e850940...
+    registry.tanzu.vmware.com/tanzu-application-platform/tap-packages@sha256:f2ad401bb3e850940...
     ```
 
 1. Pull the contents of the bundle into a directory named `ootb-supply-chain-basic`
@@ -48,19 +48,19 @@ modification to is the `source-to-url` provided by the
       -o ootb-supply-chain-basic
     ```
     ```
-		Pulling bundle 'registry.tanzu.vmware.com/tanzu-...
-			Extracting layer 'sha256:542f2bb8eb946fe9d2c8a...
+    Pulling bundle 'registry.tanzu.vmware.com/tanzu-...
+      Extracting layer 'sha256:542f2bb8eb946fe9d2c8a...
 
-		Locating image lock file images...
-		The bundle repo (registry.tanzu.vmware.com/tanzu...
+    Locating image lock file images...
+    The bundle repo (registry.tanzu.vmware.com/tanzu...
 
-		Succeeded
+    Succeeded
     ```
 
 1. Inspect the files obtained
 
     ```bash
-		tree ./ootb-supply-chain-basic/
+    tree ./ootb-supply-chain-basic/
     ```
     ```console
     ./ootb-supply-chain-basic/
@@ -73,17 +73,17 @@ modification to is the `source-to-url` provided by the
 1. Modify the desired supply chain to swap the template with another
 
     ```diff
-		--- a/supply-chain.yaml
-		+++ b/supply-chain.yaml
-		@@ -52,7 +52,7 @@ spec:
-			 - name: image-builder
-				 templateRef:
-					 kind: ClusterImageTemplate
-		-      name: kpack-template
-		+      name: foo
-				 params:
-					 - name: serviceAccount
-						 value: #@ data.values.service_account
+    --- a/supply-chain.yaml
+    +++ b/supply-chain.yaml
+    @@ -52,7 +52,7 @@ spec:
+       - name: image-builder
+         templateRef:
+           kind: ClusterImageTemplate
+    -      name: kpack-template
+    +      name: foo
+         params:
+           - name: serviceAccount
+             value: #@ data.values.service_account
     ```
 
 4. Submit the supply chain to Kubernetes
@@ -93,14 +93,14 @@ modification to is the `source-to-url` provided by the
     being submitted to Kubernetes, so before applying the modified supply chain
     to the cluster, use YTT to interpolate those values and then apply:
 
-		```
+    ```
     ytt \
       --ignore-unknown-comments \
       --file ./ootb-supply-chain-basic/config \
       --data-value registry.server=REGISTRY-SERVER \
       --data-value registry.repository=REGISTRY-REPOSITORY |
       kubectl apply -f-
-		```
+    ```
 
     > **Note:** the modified supply chain will not outlive the destruction of
     > the cluster. It's recommended that it gets saved somewhere (e.g., a git
@@ -136,7 +136,7 @@ Suppose that we ...
 1. Find out the image that contains the templates
 
     ```bash
-		kubectl get app ootb-templates \
+    kubectl get app ootb-templates \
       -n tap-install \
       -o jsonpath={.spec.fetch[0].imgpkgBundle.image}
     ```
@@ -186,10 +186,10 @@ for the installation of each individual component that makes up the platform.
 ```
 PackageInstall/tap
 └─App/tap
-	├─ PackageInstall/cert-manager
-	├─ PackageInstall/cartographer
-	├─ ...
-	└─ PackageInstall/tekton-pipelines
+  ├─ PackageInstall/cert-manager
+  ├─ PackageInstall/cartographer
+  ├─ ...
+  └─ PackageInstall/tekton-pipelines
 ```
 
 Being the installation based on Kubernetes primitives, PackageInstall will
