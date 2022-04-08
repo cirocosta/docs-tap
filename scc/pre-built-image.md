@@ -5,6 +5,7 @@ container images, the supply chains included in the Out of the Box packages
 support specifying a pre-built image to be used in the final application while
 still going through the same set of stages as any other Workload.
 
+
 ## Workload
 
 To specify a pre-built image, the `workoad.spec.image` field should be set with
@@ -71,13 +72,14 @@ ootb-supply-chain-testing-scanning
 ```
 
 To leverage the supply chains that expect a pre-built image, the only change to
-the Workload is that the `workoad.spec.image` field should be set to the name
-of the container image that brings the application to be deployed.
+the Workload that is necessary is `workoad.spec.image` field being set to the
+name of the container image that brings the application to be deployed.
 
 That's because those new supply chains make use of a new Cartographer feature
-from that lets us increase the specificity of supply chain selection by
-leveraging the `matchFields` selector rule. In summary, the selection takes
-place as follow:
+that lets us increase the specificity of supply chain selection by leveraging
+the `matchFields` selector rule. 
+
+In summary, the selection takes place as follows:
 
 - _ootb-supply-chain-basic_
   - from source: label `apps.tanzu.vmware.com/workload-type: web`
@@ -105,10 +107,6 @@ Workloads that want to bring a pre-built container image should set
 
 
 ## How it works
-
-### Multiple supply chains
-
-### ImageRepository
 
 Under the hood, an `ImageRepository` object will be created to keep track of
 new images pushed under that name, making available to further resources in the
