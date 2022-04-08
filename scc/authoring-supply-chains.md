@@ -23,30 +23,37 @@ That said, it's important to observe the two possible collisions:
 - **object name**: as mentioned before, supply chains (ClusterSupplyChain
   resource) are cluster scoped (just like any Cartographer resource prefixed
   with `Cluster`), so the name of the custom supply chain must be different
-  from the ones the Out of the Box packages provide
+  from the ones the Out of the Box packages provide.
+
+  Either create a supply chain whose name is different, or remove the
+  installation of the corresponding `ootb-supply-chain-*` from the TAP.
 
 - **workload selection**: a Workload gets reconciled against a particular
   supply chain based on a set of selection rules as defined by the supply
   chains. If the rules for the supply chain to match a Workload is ambiguous,
   the Workload will not make any progress.
 
+  Either create a supply chain whose selection rules are different from the
+  ones used by the Out of the Box Supply Chain packages, or remove the 
+  installation of the corresponding `ootb-supply-chain-*` from TAP.
+
 Currently (TAP 1.1), the following selection rules are in place for the
 supply chains of the corresponding packages:
 
 - _ootb-supply-chain-basic_
-    - ClusterSupplyChain/**basic-image-to-url**
-       - label `apps.tanzu.vmware.com/workload-type: web`
-       - `workload.spec.image` field set
-    - ClusterSupplyChain/**source-to-url**
-       - label `apps.tanzu.vmware.com/workload-type: web`
+  - ClusterSupplyChain/**basic-image-to-url**
+     - label `apps.tanzu.vmware.com/workload-type: web`
+     - `workload.spec.image` field set
+  - ClusterSupplyChain/**source-to-url**
+     - label `apps.tanzu.vmware.com/workload-type: web`
 
 - _ootb-supply-chain-testing_
-    - ClusterSupplyChain/**testing-image-to-url**
-       - label `apps.tanzu.vmware.com/workload-type: web`
-       - `workload.spec.image` field set
-    - ClusterSupplyChain/**source-test-to-url**
-       - label `apps.tanzu.vmware.com/workload-type: web`
-       - label `apps.tanzu.vmware.com/has-test: true`
+  - ClusterSupplyChain/**testing-image-to-url**
+     - label `apps.tanzu.vmware.com/workload-type: web`
+     - `workload.spec.image` field set
+  - ClusterSupplyChain/**source-test-to-url**
+     - label `apps.tanzu.vmware.com/workload-type: web`
+     - label `apps.tanzu.vmware.com/has-test: true`
 
 - _ootb-supply-chain-testing-scanning_
   - ClusterSupplyChain/**scanning-image-scan-to-url**
@@ -55,6 +62,7 @@ supply chains of the corresponding packages:
   - ClusterSupplyChain/**source-test-scan-to-url**
      - label `apps.tanzu.vmware.com/workload-type: web`
      - label `apps.tanzu.vmware.com/has-test: true`
+
 
 ## Modifying a supplychain from ootb-supply-chain-
 
