@@ -140,7 +140,7 @@ With the name of secret defined, we can move on to the definition of the secret
 itself.
 
 
-#### HTTP-based auth
+#### HTTP(S) Basic-auth / Token-based authentication
 
 Despite both the Package value being called `gitops.ssh_secret` and Workload
 parameter `gitops_ssh_secret`, it's possible to make use of HTTP(S) transports
@@ -165,8 +165,7 @@ stringData:
 
 > **Note:** when leveraging the GitOps workflow for the supply chains (see
 > [GitOps vs RegistryOps](gitops-vs-regops.md)) with HTTP-based authentication,
-> an extra annotation (`tekton.dev/git-0: <git-server-address>`) must be
-> included.
+> an extra annotation (`tekton.dev/git-0: GIT-SERVER`) must be included.
 
 
 For instance, assuming we have a repository called `kontinue/hello-world` in
