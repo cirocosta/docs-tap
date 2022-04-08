@@ -52,14 +52,33 @@ we'd expect to see that any Workloads in the cluster would end up with the
 Kubernetes configuration produced throughout the supply chain to get pushed to
 the repository whose name would be formed by concatenating
 `gitops.repository_prefix` with the name of the Workload (in this case,
-something like `https://github.com/my-org/$(workload.metadata.name).git`
+something like `https://github.com/my-org/$(workload.metadata.name).git`).
+
+```
+Supply Chain
+  params:
+      - gitops_repository_prefix: GIT-REPO_PREFIX
+
+
+workload-1:
+  `git push` to GIT-REPO-PREFIX/workload-1.git
+
+workload-2:
+  `git push` to GIT-REPO-PREFIX/workload-2.git
+
+...
+
+workload-n:
+  `git push` to GIT-REPO-PREFIX/workload-n.git
+```
+
 
 Alternatively, assuming that `gitops.repository_prefix` is _not_ configured
 during the installation of TAP, it'd still be possible to force a Workload to
 have the configuration published in a Git repository by providing to the
 Workload the `gitops_repository` parameter:
 
-```
+```bash
 tanzu apps workload create tanzu-java-web-app \
   --app tanzu-java-web-app \
   --type web \
@@ -78,7 +97,86 @@ Workload would be published to the repository provided under the
 
 Regardless of how those have been configured, as long as pushing to Git is
 configured (via repository prefix or repository name), credentials must be
-provided for the push to successfully occur.
+provided through a Kubernetes Secret in the same namespace as the Workload so
+that the push can be performed via the requests being authenticated with the
+proper credentials.
+
+To know more about how to set those up, make sure to check out the section on [Git Authentication](git-auth.md).
+
+```scala
+Workload/tanzu-java-web-app
+└─GitRepository/tanzu-java-web-app  
+                   └───────> secretRef: {name: SECRET-NAME}
+                                                   |
+                                      either a default from TAP installation or
+                                           gitops_ssh_secret Workload parameter
+```
+
+Platform operators that installed the Out of the Box Supply Chain packages
+using TAP profiles can customize the default name of the secret (`git-ssh`, by
+default) by tweaking the corresponding `ootb_supply_chain*` property in the
+`tap-values.yml` file:
+
+```yaml
+ootb_supply_chain_basic:
+  gitops:
+    ssh_secret: SECRET-NAME
+```
+
+For those that installed the `ootb-supply-chain-*` package individually via
+`tanzu package install`, one can tweak the `ootb-supply-chain-*-values.yml` as
+such:
+
+```yaml
+gitops:
+  ssh_secret: SECRET-NAME
+```
+
+Ultimately, it's also possible to override the default secret name directly in
+the Workload by leveraging the `gitops_ssh_secret` parameter, regardless of how
+TAP has been installed. Using the Tanzu CLI, that can be done with the
+`--param` flag. For instance:
+
+```bash
+tanzu apps workload create tanzu-java-web-app \
+  --app tanzu-java-web-app \
+  --type web \
+  --git-repo https://github.com/sample-accelerators/tanzu-java-web-app \
+  --git-branch main \
+  --param gitops_ssh_secret=SECRET-NAME
+```
+```console
+Create workload:
+      1 + |---
+      2 + |apiVersion: carto.run/v1alpha1
+      3 + |kind: Workload
+      4 + |metadata:
+      5 + |  labels:
+      6 + |    app.kubernetes.io/part-of: tanzu-java-web-app
+      7 + |    apps.tanzu.vmware.com/workload-type: web
+      8 + |  name: tanzu-java-web-app
+      9 + |  namespace: default
+     10 + |spec:
+     11 + |  params:
+     12 + |  - name: gitops_ssh_secret	#! parameter that overrides the default
+     13 + |    value: SECRET-NAME       #! secret name
+     14 + |  source:
+     15 + |    git:
+     16 + |      ref:
+     17 + |        branch: main
+     18 + |      url: https://github.com/sample-accelerators/tanzu-java-web-app
+```
+
+> **Note:** a secret reference will only be provided to GitRepository if
+> `gitops_ssh_secret` has been set to a non-empty string in some fashion
+> (either package property or workload parameter). If you need to force a
+> GitRepository to not reference a secret, set the value to an empty string
+> (`""`).
+
+With the name of secret defined, we can move on to the definition of the secret
+itself.
+
+
 
 #### HTTP(S) Basic-auth / Token-based authentication
 

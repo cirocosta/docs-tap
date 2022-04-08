@@ -56,6 +56,7 @@ The objects that the developer must provide or configure include:
   roles for creating the resources prescribed by the supply chain.
 
 
+
 #### <a id="registries-secrets"></a> Registries Secrets
 
 Regardless of the supply chain that a Workload goes through, there must be
