@@ -159,7 +159,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: GIT-SECRET-NAME
-	annotations:
+  annotations:
     tekton.dev/git-0: GIT-SERVER
 type: kubernetes.io/ssh-auth
 stringData:
@@ -191,7 +191,7 @@ For more informations about the credentials and setting up the Kubernetes
 secret, check out [Git Authentication's SSH section](git-auth.md#sh).
 
 
-### Workload Using Default Git Organization
+### GitOps Workload parameters
 
 During the installation of `ootb-*`, one of the values that operators can
 configure is one that dictates what the prefix the supply chain should use when
@@ -277,8 +277,8 @@ of the `ootb-` packages (or overwritten by the Workload via parameters):
 - `gitops_repository`
 
 If none of those are set, the configuration will end up being pushed to the
-same container image registry as where the container image is pushed to (i.e.,
-the registry configured under the `registry: {}` section of the `ootb-`
+same container image registry as where the application image is pushed to
+(i.e., the registry configured under the `registry: {}` section of the `ootb-`
 values).
 
 For instance, assuming the installation of TAP via profiles having the
@@ -295,3 +295,6 @@ We'd expect Kubernetes configuration produced by the supply chain to be pushed
 to an as an image named after `REGISTRY-SERVER/REGISTRY-REPOSITORY` including
 the Workload name.
 
+In this scenario, no extra credentials need to be setup as the secret
+containing the credentials for such container image registry would've already
+been configuring during the setup of the Workload namespace.
