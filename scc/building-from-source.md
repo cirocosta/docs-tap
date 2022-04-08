@@ -4,7 +4,18 @@ Regardless of the Out of the Box Supply Chain Package installed, when it comes
 to providing source code for the Workload, that can either come from a
 developer's machine (directory in the filesystem) or a Git repository.
 
-Below we'll dive into details about both.
+```
+Supply Chain
+   
+  -- fetch source                 * either from Git or local directory
+    -- test 
+      -- build 
+        -- scan 
+          -- apply-conventions 
+            -- push config
+```
+
+Below we'll dive into details about both approaches.
 
 > **Note:** If you don't want to have the application built from scratch using
 > the supply chain, but instead provide a pre-built container image, check out

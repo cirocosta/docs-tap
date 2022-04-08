@@ -19,6 +19,10 @@ Here we dive into the specifics of that last phase of the supply chains
 constrating the use case of pushing configuration to a Git repository and an
 image registry.
 
+> **Note:** For more information about providing source code either from a
+> local directory or git repository, see [Building from
+> Source](building-from-source.md).  
+
 
 ## GitOps
 
