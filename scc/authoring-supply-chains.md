@@ -73,27 +73,49 @@ supply chains of the corresponding packages:
      - label `apps.tanzu.vmware.com/has-test: true`
 
 
-## Preventing TAP supply chains from being installed
+## Providing your own templates
 
-Just like any other package, Using TAP profiles we can prevent supply chains
-from being installed you can make use of the `excluded_packages` property in
-`tap-values.yml`. For instance:
+Similar to supply chains, Cartographer templates (`Cluster*Template` resources)
+are cluster-scoped, so we must make sure that the new templates being submitted
+to the cluster do not conflict with the ones installed by the `ootb-templates`
+package.
+
+Currently, the following set of objects are provided by `ootb-templates`:
+
+- ClusterConfigTemplate/**config-template**
+- ClusterConfigTemplate/**convention-template**
+- ClusterDeploymentTemplate/**app-deploy**
+- ClusterImageTemplate/**image-provider-template**
+- ClusterImageTemplate/**image-scanner-template**
+- ClusterImageTemplate/**kpack-template**
+- ClusterRole/**ootb-templates-app-viewer**
+- ClusterRole/**ootb-templates-deliverable**
+- ClusterRole/**ootb-templates-workload**
+- ClusterRunTemplate/**tekton-source-pipelinerun**
+- ClusterRunTemplate/**tekton-taskrun**
+- ClusterSourceTemplate/**delivery-source-template**
+- ClusterSourceTemplate/**source-scanner-template**
+- ClusterSourceTemplate/**source-template**
+- ClusterSourceTemplate/**testing-pipeline**
+- ClusterTask/**git-writer**
+- ClusterTask/**image-writer**
+- ClusterTemplate/**config-writer-template**
+- ClusterTemplate/**deliverable-template**
+
+Before submitting your own, make sure that either the name and resource has no
+conflicts with the ones installed by `ootb-templates`, or exclude from the
+installation the template you want to override making use of the
+`excluded_templates` property of `ootb-templates`. 
+
+For instance, if we wanted to override `config-template` to provide our own
+with the very same name (so that we don't need to modify the supply chain), in
+`tap-values.yml` exclude the TAP-provided template:
 
 ```yaml
-# add to exclued_packages `ootb-*` packages you DON'T want to install
-# 
-excluded_packages:
-  - ootb-supply-chain-basic.apps.tanzu.vmware.com
-  - ootb-supply-chain-testing.apps.tanzu.vmware.com
-  - ootb-supply-chain-testing-scanning.apps.tanzu.vmware.com
-
-# comment out remove the `supply_chain` property
-#
-# supply_chain: ""
+ootb_templates:
+  excluded_templates:
+    - 'config-writer'
 ```
-
-With the profile configured to not install the supply chains, there will be no
-TAP-originated ClusterSupplyChain objects in the cluster.
 
 
 ## Modifying a supplychain from ootb-supply-chain-
@@ -321,6 +343,29 @@ tanzu package install tap --values-file tap-values.yaml
 
 1. pause the PackageInstall for `ootb-supply-chain-<>` for changing
    supplychains
+
+
+## Preventing TAP supply chains from being installed
+
+Just like any other package, Using TAP profiles we can prevent supply chains
+from being installed you can make use of the `excluded_packages` property in
+`tap-values.yml`. For instance:
+
+```yaml
+# add to exclued_packages `ootb-*` packages you DON'T want to install
+# 
+excluded_packages:
+  - ootb-supply-chain-basic.apps.tanzu.vmware.com
+  - ootb-supply-chain-testing.apps.tanzu.vmware.com
+  - ootb-supply-chain-testing-scanning.apps.tanzu.vmware.com
+
+# comment out remove the `supply_chain` property
+#
+# supply_chain: ""
+```
+
+With the profile configured to not install the supply chains, there will be no
+TAP-originated ClusterSupplyChain objects in the cluster.
 
 
 
