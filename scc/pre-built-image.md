@@ -186,11 +186,11 @@ That image found by the ImageRepository objects is then carried through the
 supply chain all the way to the final configuration that gets pushed to either
 a git repository or image registry so that it can be deployed in a run cluster.
 
-Note that the image name matches the one we supplied in the
-`workload.spec.image` field but it also includes the exact digest of the latest
-image found under that tag. If a new image was pushed to that same tag, we'd
-see the `ImageRepository` resolving that name to a different digest
-corresponding to the new image pushed.
+> **Note:** the image name matches the one we supplied in the
+> `workload.spec.image` field but it also includes the exact digest of the
+> latest image found under that tag. If a new image was pushed to that same
+> tag, we'd see the `ImageRepository` resolving that name to a different digest
+> corresponding to the new image pushed.
 
 
 ## Examples
@@ -212,87 +212,85 @@ to a final container image that has our application built as well as any
 runtime dependencies that it needs.
 
 Here we leverage the `maven` base image for compiling our application code, and
-then the very minimal distroless java17-debian11 image for providing a JRE that
-can run our built application. 
+then the very minimal distroless `java17-debian11` image for providing a JRE
+that can run our built application. 
 
 With the image built, we then push it to a container image registry, and then
 reference it in the Workload.
 
-1. create a Dockerfile that describes how to build our application and make it
+1. Create a Dockerfile that describes how to build our application and make it
    available as a container image
 
-```Dockerfile
-ARG BUILDER_IMAGE=maven
-ARG RUNTIME_IMAGE=gcr.io/distroless/java17-debian11
+    ```Dockerfile
+    ARG BUILDER_IMAGE=maven
+    ARG RUNTIME_IMAGE=gcr.io/distroless/java17-debian11
 
 
-FROM $BUILDER_IMAGE AS build
+    FROM $BUILDER_IMAGE AS build
 
-        ADD . .
-        RUN unset MAVEN_CONFIG && ./mvnw clean package -B -DskipTests
+            ADD . .
+            RUN unset MAVEN_CONFIG && ./mvnw clean package -B -DskipTests
 
 
-FROM $RUNTIME_IMAGE AS runtime
+    FROM $RUNTIME_IMAGE AS runtime
 
-        COPY --from=build /target/demo-0.0.1-SNAPSHOT.jar /demo.jar
-        CMD [ "/demo.jar" ]
-```
+            COPY --from=build /target/demo-0.0.1-SNAPSHOT.jar /demo.jar
+            CMD [ "/demo.jar" ]
+    ```
 
-2. push the container image to an image registry
+2. Push the container image to an image registry
 
-```bash
-IMAGE=ghcr.io/kontinue/hello-world:tanzu-java-web-app
+    ```bash
+    docker build -t IMAGE .
+    docker push IMAGE
+    ```
 
-docker build -t $IMAGE .
-docker push $IMAGE
-```
+3. Create a workload that makes use of it
 
-3. create a workload that makes use of it
+    ```bash
+    tanzu apps workload create tanzu-java-web-app \
+      --type web \
+      --app tanzu-java-web-app \
+      --image IMAGE
+    ```
+    ```console
+    Create workload:
+          1 + |---
+          2 + |apiVersion: carto.run/v1alpha1
+          3 + |kind: Workload
+          4 + |metadata:
+          5 + |  labels:
+          6 + |    app.kubernetes.io/part-of: hello-world
+          7 + |    apps.tanzu.vmware.com/workload-type: web
+          8 + |  name: tanzu-java-web-app
+          9 + |  namespace: default
+         10 + |spec:
+         11 + |  image: IMAGE
+    ```
 
-```bash
-tanzu apps workload create tanzu-java-web-app \
-  --type web \
-  --app tanzu-java-web-app \
-  --image ghcr.io/kontinue/hello-world:tanzu-java-web-app
-```
-```console
-Create workload:
-      1 + |---
-      2 + |apiVersion: carto.run/v1alpha1
-      3 + |kind: Workload
-      4 + |metadata:
-      5 + |  labels:
-      6 + |    app.kubernetes.io/part-of: hello-world
-      7 + |    apps.tanzu.vmware.com/workload-type: web
-      8 + |  name: tanzu-java-web-app
-      9 + |  namespace: default
-     10 + |spec:
-     11 + |  image: ghcr.io/kontinue/hello-world:tanzu-java-web-app
-```
+4. Observe that we get it running
 
-4. observe that we get it running
+    ```bash
+    tanzu apps workload get tanzu-java-web-app
+    ```
+    ```console
+    # tanzu-java-web-app: Ready
+    ---
+    lastTransitionTime: "2022-04-06T19:32:46Z"
+    message: ""
+    reason: Ready
+    status: "True"
+    type: Ready
 
-```bash
-tanzu apps workload get tanzu-java-web-app
-```
-```console
-# tanzu-java-web-app: Ready
----
-lastTransitionTime: "2022-04-06T19:32:46Z"
-message: ""
-reason: Ready
-status: "True"
-type: Ready
+    Workload pods
+    NAME                                                   STATUS      RESTARTS   AGE
+    tanzu-java-web-app-00001-deployment-7d7df5ccf5-k58rt   Running     0          32s
+    tanzu-java-web-app-config-writer-xjmvw-pod             Succeeded   0          89s
 
-Workload pods
-NAME                                                   STATUS      RESTARTS   AGE
-tanzu-java-web-app-00001-deployment-7d7df5ccf5-k58rt   Running     0          32s
-tanzu-java-web-app-config-writer-xjmvw-pod             Succeeded   0          89s
-
-Workload Knative Services
-NAME                 READY   URL
-tanzu-java-web-app   Ready   http://tanzu-java-web-app.default.example.com
-```
+    Workload Knative Services
+    NAME                 READY   URL
+    tanzu-java-web-app   Ready   http://tanzu-java-web-app.default.example.com
+    ```
 
 
 ### Sprint Boot's `build-image` Maven target
@@ -357,7 +355,6 @@ As the supply chains still aim at Knative as the runtime for the container
 image provided, the application must adhere to Knative standards when it comes
 to bringing the container up and serving traffic to it:
 
-
 - **Listen on port 8080**
 
 The Knative service gets created with the pod template spec being set to have
@@ -371,7 +368,6 @@ ports:
     protocol: TCP
 ```
 
-
 - **Non-privileged user ID**
 
 By default, the container instiated as part of the pod will be ran as user
@@ -381,7 +377,6 @@ By default, the container instiated as part of the pod will be ran as user
 securityContext:
   runAsUser: 1000
 ```
-
 
 - **Arguments other than the image's default entrypoint**
 
@@ -393,7 +388,6 @@ image is able to run based solely on the default entrypoint configured for it
 In case extra configuration should be provided, environment variables can be
 used (see `--env` flags in `tanzu apps workload create` or
 `workload.spec.env`).
-
 
 - **Credentials for pulling the container image at runtime**
 
