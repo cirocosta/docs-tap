@@ -1,11 +1,8 @@
 # Building from source
 
-Regardless of the supply chain, when providing source code it can either come
-from a developer's machine (directory in the filesystem) or a Git repository.
-
-When it comes to building applications from source code, there are two ways
-that such source code can be made available for the supply chain components:
-either via git or a container image.
+Regardless of the Out of the Box Supply Chain installed, when providing source
+code for the Workload, that can either come from a developer's machine
+(directory in the filesystem) or a Git repository.
 
 
 ## Git source
@@ -20,7 +17,10 @@ Using the `tanzu` CLI, one can do so with the following flags:
 - `--git-repo`: git url to remote source code
 - `--git-tag`: tag within the git repo to checkout
 
-For instance:
+For instance, we could create a `Workload` whose source code comes from the
+`main` branch of the repository
+`https://github.com/sample-accelerators/tanzu-java-web-app` issuing the
+following command:
 
 ```bash
 tanzu apps workload create tanzu-java-web-app \
@@ -48,45 +48,134 @@ Create workload:
      15 + |      url: https://github.com/sample-accelerators/tanzu-java-web-app
 ```
 
-note: the git repository URL must include the scheme (`http://`, `https://`, or
-`ssh://`).
-
-
-### How it works
-
-With the `git` field under `workload.spec.source` filled, the supply chain
-takes care of creating a child GitRepository object that keeps track of commits
-made to the git repository stated in `workload.spec.source.git`, which in turn
-makes available for further components in the supply chain the latest commits
-made to that branch in that repository via an HTTP-based URL that can be
-reached within the cluster.
+Note that the Git repository URL **must** include the scheme (`http://`,
+`https://`, or `ssh://`).
 
 
 ### Private git repository
 
-To fetch source code from a repository that required credentials, one must
-provide those via a secret that's referenced by the GitRepostiory object
-created.
+To fetch source code from a repository that requires credentials to be
+presented, one must provide those via a Kubernetes Secret object that's
+referenced by the `GitRepostiory` object created for that Workload.
 
-Platform operators can customize the default name of the secret during TAP
-installation time via the `gitops.ssh_secret` field, or being supplied in each
-Workload in the `gitops_ssh_secret` parameter where the name of the secret
-should be passed.
+```
+Workload/tanzu-java-web-app
+└─GitRepository/tanzu-java-web-app  
+                   └───────────> `secretRef: {name: <secret_name>}`
+```
+
+Platform operators can customize the default name of the Secret during the
+installation of TAP via the `gitops.ssh_secret` field in thej
+`ootb-supply-chain-*` packages, or by supplying the corresponding parameter
+(`gitops_ssh_secret`) to the Workloads.
 
 
 #### HTTP-based auth
 
-secret
+Despite both the package value and parameter being called `gitops_ssh_secret`,
+it's possible to make use of HTTP(S) transports just as well.
 
-```
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: git-http
+  annotations:
+    tekton.dev/git-0: https://github.com
+type: kubernetes.io/basic-auth
+stringData:
+  username: admin
+  password: admin
 ```
 
 #### SSH auth
 
-secret
 
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: git-ssh
+type: kubernetes.io/ssh-auth
+stringData:
+  known_hosts: string             # git server public keys
+  identity: string                # private key with pull permissions
+  identity.pub: string            # public of the `identity` private key
 ```
+
+1. generate a new key pair (`identity` and `identity.pub`)
+
+
+once done, head to your git provider and add the `identity.pub` as a deployment
+key for the repository of interest or add to an account that has access to it.
+for instance, for github: `https://github.com/<repository>/settings/keys/new`.
+
+```bash
+ssh-keygen -t rsa -q -b 4096 -f "identity" -N "" -C ""
 ```
+
+
+gather public keys from the provider (e.g., github):
+
+```bash
+ssh-keyscan github.com > ./known_hosts
+```
+
+
+create the secret:
+
+```bash
+kubectl create secret generic git-ssh \
+    --from-file=./identity \
+    --from-file=./identity.pub \
+    --from-file=./known_hosts
+```
+
+### How it works
+
+With the `workload.spec.source.git` filled, the supply chain takes care of
+creating a child `GitRepository` object that keeps track of commits made to the
+git repository stated in `workload.spec.source.git`.
+
+For each revision found, `gitrepository.status.artifact` gets updated providing
+information about an HTTP endpoint that it makes available for other components
+to fetch the source code from within the cluster, as well as the digest of the
+latest commit found:
+
+```yaml
+apiVersion: source.toolkit.fluxcd.io/v1beta1
+kind: GitRepository
+metadata:
+  name: tanzu-java-web-app
+spec:
+  gitImplementation: go-git
+  ignore: '!.git'
+  interval: 1m0s
+  ref: {branch: main}
+  timeout: 20s
+  url: https://github.com/sample-accelerators/tanzu-java-web-app
+status:
+  artifact:
+    checksum: 375c2daee5fc8657c5c5b49711a8e94d400994d7
+    lastUpdateTime: "2022-04-07T15:02:30Z"
+    path: gitrepository/default/tanzu-java-web-app/d85df1fc.tar.gz
+    revision: main/d85df1fc28c6b86ca54bd613f55991645d3b257c
+    url: http://source-controller.flux-system.svc.cluster.local./gitrepository/default/tanzu-java-web-app/d85df1fc.tar.gz
+  conditions:
+  - lastTransitionTime: "2022-04-07T15:02:30Z"
+    message: 'Fetched revision: main/d85df1fc28c6b86ca54bd613f55991645d3b257c'
+    reason: GitOperationSucceed
+    status: "True"
+    type: Ready
+  observedGeneration: 1
+```
+
+This way, with Cartographer passing the artifact URL and revision for further
+components, those just need to be able to consume source code from an internal
+URL where a tarball with the source code can be fetch, not having to deal with
+any Git-specific details.
+
+
 
 ### Related Parameters
 
