@@ -53,7 +53,7 @@ stringData:
 With the Secret created, attach it to the ServiceAccount configured for the
 Workload by including it in its set of secrets. For instance:
 
-```
+```yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -80,7 +80,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: GIT-SECRET-NAME
-	annotations:
+  annotations:
     tekton.dev/git-0: GIT-SERVER
 type: kubernetes.io/ssh-auth
 stringData:
@@ -129,7 +129,7 @@ stringData:
 With the Secret created, attach it to the ServiceAccount configured for the
 Workload by including it in its set of secrets. For instance:
 
-```
+```yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
