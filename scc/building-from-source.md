@@ -1,14 +1,14 @@
 # Building from source
 
-Regardless of the Out of the Box Supply Chain Package installed, when providing
-source code for the Workload, that can either come from a developer's machine
-(directory in the filesystem) or a Git repository.
+Regardless of the Out of the Box Supply Chain Package installed, when it comes
+to providing source code for the Workload, that can either come from a
+developer's machine (directory in the filesystem) or a Git repository.
 
 Below we'll dive into details about both.
 
-If you don't want to have the application built from scratch using the supply
-chain, but instead provide a pre-built container image, check out [Pre-built
-image](pre-built-image.md).
+> **Note:** If you don't want to have the application built from scratch using
+> the supply chain, but instead provide a pre-built container image, check out
+> [Pre-built image](pre-built-image.md).
 
 
 ## Git source
@@ -16,7 +16,7 @@ image](pre-built-image.md).
 To provide to the supply chains source code from a Git repository,
 `workload.spec.source.git` should be filled.
 
-Using the `tanzu` CLI, one can do so with the following flags:
+Using the `tanzu` CLI, one can do so with the use of the following flags:
 
 - `--git-branch`: branch within the git repo to checkout
 - `--git-commit`: commit SHA within the git repo to checkout
@@ -54,15 +54,15 @@ Create workload:
      15 + |      url: https://github.com/sample-accelerators/tanzu-java-web-app
 ```
 
-> Note: the Git repository URL **must** include the scheme (`http://`,
+> **Note:** the Git repository URL must include the scheme (`http://`,
 `https://`, or `ssh://`).
 
 
 ### Private git repository
 
-To fetch source code from a repository that requires credentials to be
-presented, one must provide those via a Kubernetes Secret object that's
-referenced by the `GitRepostiory` object created for that Workload (see [how it
+To fetch source code from a repository that requires credentials, one must
+provide those via a Kubernetes Secret object that's referenced by the
+`GitRepostiory` object created for that Workload (see [how it
 works](#how-it-works) to know more about the underlying process of detecting
 changes to the repository).
 
@@ -72,10 +72,59 @@ Workload/tanzu-java-web-app
                    └───────────> `secretRef: {name: <secret_name>}`
 ```
 
-Platform operators can customize the default name of the Secret during the
-installation of TAP via the `gitops.ssh_secret` field in thej
-`ootb-supply-chain-*` packages, or by supplying the corresponding parameter
-(`gitops_ssh_secret`) to the Workloads.
+Platform operators that installed the Out of the Box Supply Chain packages
+using TAP profiles can customize the default name of the secret (`git-ssh`, by
+default) by tweaking the corresponding `ootb_supply_chain*` property in the
+`tap-values.yml` file:
+
+```
+ootb_supply_chain_basic:
+  gitops:
+    ssh_secret: SECRET-NAME
+```
+
+For those that installed the `ootb-supply-chain-*` package individually via
+`tanzu package install`, one can tweak the `ootb-supply-chain-*-values.yml` as
+such:
+
+```
+gitops:
+  ssh_secret: SECRET-NAME
+```
+
+Ultimately, it's also possible to override the default secret name directly in
+the Workload by leveraging the `gitops_ssh_secret` parameter. Using the Tanzu
+CLI, that can be done with the `--param` flag. For instance:
+
+```bash
+tanzu apps workload create tanzu-java-web-app \
+  --app tanzu-java-web-app \
+  --type web \
+  --git-repo https://github.com/sample-accelerators/tanzu-java-web-app \
+  --git-branch main \
+  --param gitops_ssh_secret=SECRET-NAME
+```
+```console
+Create workload:
+      1 + |---
+      2 + |apiVersion: carto.run/v1alpha1
+      3 + |kind: Workload
+      4 + |metadata:
+      5 + |  labels:
+      6 + |    app.kubernetes.io/part-of: tanzu-java-web-app
+      7 + |    apps.tanzu.vmware.com/workload-type: web
+      8 + |  name: tanzu-java-web-app
+      9 + |  namespace: default
+     10 + |spec:
+     11 + |  params:
+     12 + |  - name: gitops_ssh_secret			#! parameter
+     13 + |    value: SECRET-NAME
+     14 + |  source:
+     15 + |    git:
+     16 + |      ref:
+     17 + |        branch: main
+     18 + |      url: https://github.com/sample-accelerators/tanzu-java-web-app
+```
 
 
 #### HTTP-based auth
