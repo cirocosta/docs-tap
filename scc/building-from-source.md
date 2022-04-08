@@ -324,6 +324,77 @@ This way, regardless of whether the cluster the developer is targetting is
 really local (a cluster in the developer's machine) or not, the source code
 will be made available by using an image registry for that.
 
+For instance, assuming a developer has source code under the current directory
+(`.`) and access to a repository (`REGISTRY-REPOSITORY`) in a container image
+registry (`REGISTRY-SERVER`), a Workload could be created like so:
+
+```bash
+tanzu apps workload create tanzu-java-web-app \
+  --app tanzu-java-web-app \
+  --type web \
+  --local-path . \
+  --source-image $REGISTRY/test
+```
+```console
+Publish source in "." to "REGISTRY-SERVER/REGISTRY-REPOSITORY"? 
+It may be visible to others who can pull images from that repository 
+
+	Yes
+
+Publishing source in "." to "REGISTRY-SERVER/REGISTRY-REPOSITORY"...
+Published source
+
+Create workload:
+      1 + |---
+      2 + |apiVersion: carto.run/v1alpha1
+      3 + |kind: Workload
+      4 + |metadata:
+      5 + |  labels:
+      6 + |    app.kubernetes.io/part-of: tanzu-java-web-app
+      7 + |    apps.tanzu.vmware.com/workload-type: web
+      8 + |  name: tanzu-java-web-app
+      9 + |  namespace: default
+     10 + |spec:
+     11 + |  source:
+     12 + |    image: REGISTRY-SERVER/REGISTRY-REPOSITORY:latest@<digest>
+```
+
+
+### Authentication
+
+Both the cluster and the developer's machine must be configured to properly
+provide the credentials for accessing the image registry where the local source
+code will be published to. 
+
+#### Developer
+
+As the `tanzu` CLI needs to push content (the source code) to the image
+registry indicated via `--source-image`, it's important for the CLI to find the
+credentials that allows it to do so, requiring the developer to configure their
+machine accordingly.
+
+To ensure credentials are available, use `docker` to make the necessary
+credentials available for the Tanzu CLI to perform the image push:
+
+```
+docker login REGISTRY-SERVER -u REGISTRY-USERNAME -p REGISTRY-PASSWORD
+```
+
+#### Supply chain components
+
+Aside from the developer's ability to push source code to the image registry,
+the cluster must also have the proper credentials for being able to pull that
+container image and unpack it so it can run tests, build the application, etc.
+
+To do so, make sure the ServiceAccount used by the Workload points at the
+Kubernetes secret that contains the credentials.
+
+If the registry being targetted by the developer is the same as the one of whom
+credentials are provided during the Workload namespace setup, no further action
+is required here. Otherwise, follow the same steps as recommended for the
+application image.
+
+
 ### How it works
 
 When a Workload specifies that source code should come from an image (i.e.,
@@ -370,35 +441,6 @@ we see that instead of a GitRepository object, an ImageRepository is created:
       └─Pod/app-config-writer-2zj7w-pod
 ```
 
-Workload parameters:
-
-- `serviceAccount`: the name of the serviceaccount that specifies the secret to
-  be used by the objects created by the Workload according to the supply
-chains.
-
-
-### Authentication
-
-#### Developer
-
-As the `tanzu` CLI needs to push content (the source code) to an image registry
-indicated via `--source-image`, it's important for the CLI to find the
-credentials that allows it to do so, requiring the developer to configure their
-machine accordingly.
-
-To ensure credentials are available, use `docker` or other tools that are
-compatible with docker's authentication mechanisms to log into the image
-registry being targetted:
-
-```
-docker login <image_registry>
-```
-
-#### Supply chain components
-
-Aside from the developer's ability to push source code to the image registry,
-the cluster must also have the proper credentials for being able to pull that
-container image and unpack it so it can run tests, build the application, etc.
-
-To do so, make sure the serviceaccount used by the Workload points at the
-Kubernetes secret that contains the credentials.
+This resource (`ImageRepository`) provides the same semantics as GitRepository,
+except that it looks for source code in image registries rather than git
+repositories.
