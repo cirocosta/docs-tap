@@ -278,10 +278,10 @@ hardcode some environment variable.
 1. Exclude the `kpack-template` from the set of templates that `ootb-templates`
 installs by upating `tap-values.yml`
 
-		```
-		ootb_templates:
-			excluded_templates: ['kpack-template']
-		```
+    ```
+    ootb_templates:
+      excluded_templates: ['kpack-template']
+    ```
 
 1. Find out the image that contains the templates
 
@@ -329,19 +329,19 @@ installs by upating `tap-values.yml`
 
 1. Change the property we want to change
 
-		```diff
-		--- a/config/kpack-template.yaml
-		+++ b/config/kpack-template.yaml
-		@@ -65,6 +65,8 @@ spec:
-						 subPath: #@ data.values.workload.spec.source.subPath
-					 build:
-						 env:
-		+        - name: FOO
-		+          value: BAR
-						 - name: BP_OCI_SOURCE
-							 value: #@ data.values.source.revision
-						 #@ if/end param("live-update"):
-		```
+    ```diff
+    --- a/config/kpack-template.yaml
+    +++ b/config/kpack-template.yaml
+    @@ -65,6 +65,8 @@ spec:
+             subPath: #@ data.values.workload.spec.source.subPath
+           build:
+             env:
+    +        - name: FOO
+    +          value: BAR
+             - name: BP_OCI_SOURCE
+               value: #@ data.values.source.revision
+             #@ if/end param("live-update"):
+    ```
 
 1. Submit the template
 
