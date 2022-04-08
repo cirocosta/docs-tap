@@ -39,3 +39,9 @@ As auxiliary components, Tanzu Application Platform also includes:
   configuration built throughout a supply chain
 
 Both Templates and Delivery Basic are requirements for the Supply Chains.
+
+- [Authoring supply chains](authoring-supply-chains.md)
+- [Building from Source](building-from-source.md)
+- [Gitops vs RegistryOps](gitops-vs-regops.md)
+- [Pre-built image](pre-built-image.md)
+- [Workload](workload.md)

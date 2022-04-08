@@ -1,8 +1,14 @@
 # Building from source
 
-Regardless of the Out of the Box Supply Chain installed, when providing source
-code for the Workload, that can either come from a developer's machine
+Regardless of the Out of the Box Supply Chain Package installed, when providing
+source code for the Workload, that can either come from a developer's machine
 (directory in the filesystem) or a Git repository.
+
+Below we'll dive into details about both.
+
+If you don't want to have the application built from scratch using the supply
+chain, but instead provide a pre-built container image, check out [Pre-built
+image](pre-built-image.md).
 
 
 ## Git source
@@ -17,8 +23,8 @@ Using the `tanzu` CLI, one can do so with the following flags:
 - `--git-repo`: git url to remote source code
 - `--git-tag`: tag within the git repo to checkout
 
-For instance, we could create a `Workload` whose source code comes from the
-`main` branch of the repository
+For instance, having installed `ootb-supply-chain-basic`, we could create a
+`Workload` whose source code comes from the `main` branch of the repository
 `https://github.com/sample-accelerators/tanzu-java-web-app` issuing the
 following command:
 
@@ -48,7 +54,7 @@ Create workload:
      15 + |      url: https://github.com/sample-accelerators/tanzu-java-web-app
 ```
 
-Note that the Git repository URL **must** include the scheme (`http://`,
+> Note: the Git repository URL **must** include the scheme (`http://`,
 `https://`, or `ssh://`).
 
 
@@ -56,7 +62,9 @@ Note that the Git repository URL **must** include the scheme (`http://`,
 
 To fetch source code from a repository that requires credentials to be
 presented, one must provide those via a Kubernetes Secret object that's
-referenced by the `GitRepostiory` object created for that Workload.
+referenced by the `GitRepostiory` object created for that Workload (see [how it
+works](#how-it-works) to know more about the underlying process of detecting
+changes to the repository).
 
 ```
 Workload/tanzu-java-web-app
