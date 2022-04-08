@@ -31,12 +31,9 @@ produced by the supply chains should be persisted in a Git repository, it only
 gets used if certain parameters are set in the supply chain:
 
 - `gitops.repository_prefix`, configured during the Out of the Box Supply
-  Chains package installation
-
-or
+  Chains package installation, or
 
 - `gitops_repository`, as a Workload parameter
-
 
 For instance, assuming the installation of the supply chain packages through
 TAP profiles and a `tap-values.yml` as such:
