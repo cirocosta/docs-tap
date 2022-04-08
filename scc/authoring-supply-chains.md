@@ -34,25 +34,25 @@ Currently (TAP 1.1), the following selection rules are in place for the
 supply chains of the corresponding packages:
 
 - _ootb-supply-chain-basic_
-  - `ClusterSupplyChain/basic-image-to-url`
+  - ClusterSupplyChain/**basic-image-to-url**
      - label `apps.tanzu.vmware.com/workload-type: web`
      - `workload.spec.image` field set
-  - `ClusterSupplyChain/source-to-url`
+  - ClusterSupplyChain/**source-to-url**
      - label `apps.tanzu.vmware.com/workload-type: web`
 
 - _ootb-supply-chain-testing_
-  - `ClusterSupplyChain/testing-image-to-url`
+  - ClusterSupplyChain/**testing-image-to-url**
      - label `apps.tanzu.vmware.com/workload-type: web`
      - `workload.spec.image` field set
-  - `ClusterSupplyChain/source-test-to-url`
+  - ClusterSupplyChain/**source-test-to-url**
      - label `apps.tanzu.vmware.com/workload-type: web`
      - label `apps.tanzu.vmware.com/has-test: true`
 
 - _ootb-supply-chain-testing-scanning_
-  - `ClusterSupplyChain/scanning-image-scan-to-url`
+  - ClusterSupplyChain/**scanning-image-scan-to-url**
      - label `apps.tanzu.vmware.com/workload-type: web`
      - `workload.spec.image` field set
-  - `ClusterSupplyChain/source-test-scan-to-url`
+  - ClusterSupplyChain/**source-test-scan-to-url**
      - label `apps.tanzu.vmware.com/workload-type: web`
      - label `apps.tanzu.vmware.com/has-test: true`
 
