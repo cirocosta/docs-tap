@@ -8,7 +8,7 @@ Here you'll find details on how to appropriately setup Kubernetes secrets for
 carrying those credentials forward to the proper resources.
 
 
-## HTTP(S) Basic / Token-based authentication
+## HTTP
 
 For any action upon an HTTP(s)-based repository, create a Kubernetes Secret
 object of type `kubernetes.io/basic-auth` like so:
@@ -20,7 +20,7 @@ metadata:
   name: SECRET-NAME
   annotations:
     tekton.dev/git-0: GIT-SERVER        # ! required
-type: kubernetes.io/basic-auth
+type: kubernetes.io/basic-auth          # ! required
 stringData:
   username: GIT-USERNAME
   password: GIT-PASSWORD
@@ -35,7 +35,9 @@ as follows:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: GIT-SECRET-NAME
+  name: git-secret
+  annotations:
+    tekton.dev/git-0: https://github.com
 type: kubernetes.io/basic-auth
 stringData:
   username: ""
@@ -72,7 +74,6 @@ leverage SSH.
 
 For providing the credentials for any Git operations with such transport,
 create the Kubernetes Secret like so:
-
 
 ```yaml
 apiVersion: v1

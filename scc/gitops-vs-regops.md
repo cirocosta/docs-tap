@@ -95,87 +95,11 @@ Workload would be published to the repository provided under the
 
 ### Authentication
 
-Regardless of how those have been configured, as long as pushing to Git is
-configured (via repository prefix or repository name), credentials must be
-provided through a Kubernetes Secret in the same namespace as the Workload so
-that the push can be performed via the requests being authenticated with the
-proper credentials.
-
-To know more about how to set those up, make sure to check out the section on [Git Authentication](git-auth.md).
-
-```scala
-Workload/tanzu-java-web-app
-└─GitRepository/tanzu-java-web-app  
-                   └───────> secretRef: {name: SECRET-NAME}
-                                                   |
-                                      either a default from TAP installation or
-                                           gitops_ssh_secret Workload parameter
-```
-
-Platform operators that installed the Out of the Box Supply Chain packages
-using TAP profiles can customize the default name of the secret (`git-ssh`, by
-default) by tweaking the corresponding `ootb_supply_chain*` property in the
-`tap-values.yml` file:
-
-```yaml
-ootb_supply_chain_basic:
-  gitops:
-    ssh_secret: SECRET-NAME
-```
-
-For those that installed the `ootb-supply-chain-*` package individually via
-`tanzu package install`, one can tweak the `ootb-supply-chain-*-values.yml` as
-such:
-
-```yaml
-gitops:
-  ssh_secret: SECRET-NAME
-```
-
-Ultimately, it's also possible to override the default secret name directly in
-the Workload by leveraging the `gitops_ssh_secret` parameter, regardless of how
-TAP has been installed. Using the Tanzu CLI, that can be done with the
-`--param` flag. For instance:
-
-```bash
-tanzu apps workload create tanzu-java-web-app \
-  --app tanzu-java-web-app \
-  --type web \
-  --git-repo https://github.com/sample-accelerators/tanzu-java-web-app \
-  --git-branch main \
-  --param gitops_ssh_secret=SECRET-NAME
-```
-```console
-Create workload:
-      1 + |---
-      2 + |apiVersion: carto.run/v1alpha1
-      3 + |kind: Workload
-      4 + |metadata:
-      5 + |  labels:
-      6 + |    app.kubernetes.io/part-of: tanzu-java-web-app
-      7 + |    apps.tanzu.vmware.com/workload-type: web
-      8 + |  name: tanzu-java-web-app
-      9 + |  namespace: default
-     10 + |spec:
-     11 + |  params:
-     12 + |  - name: gitops_ssh_secret	#! parameter that overrides the default
-     13 + |    value: SECRET-NAME       #! secret name
-     14 + |  source:
-     15 + |    git:
-     16 + |      ref:
-     17 + |        branch: main
-     18 + |      url: https://github.com/sample-accelerators/tanzu-java-web-app
-```
-
-> **Note:** a secret reference will only be provided to GitRepository if
-> `gitops_ssh_secret` has been set to a non-empty string in some fashion
-> (either package property or workload parameter). If you need to force a
-> GitRepository to not reference a secret, set the value to an empty string
-> (`""`).
-
-With the name of secret defined, we can move on to the definition of the secret
-itself.
-
+Regardless of how the supply chains have been configured, as long as pushing to
+Git is configured (via repository prefix or repository name), credentials must
+be provided through a Kubernetes Secret in the same namespace as the Workload
+(attached to the Workload ServiceAccount) so that the push can be performed via
+the requests being authenticated with the proper credentials.
 
 
 #### HTTP(S) Basic-auth / Token-based authentication
@@ -203,292 +127,68 @@ stringData:
 > server. E.g., for https://github.com/vmware-tanzu/cartographer,
 > https://github.com should be provided as the GIT-SERVER.
 
+With the Secret created, attach it to the ServiceAccount used by the Workload.
+For instance:
+
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+secrets:
+  - name: registry-credentials
+  - name: tap-registry
+  - name: GIT-SECRET-NAME
+imagePullSecrets:
+  - name: registry-credentials
+  - name: tap-registry
+```
+
+For more informations about the credentials and setting up the Kubernetes
+secret, check out [Git Authentication's HTTP section](git-auth.md#http).
 
 ### SSH
 
+If the repository at which configuration will be published makes use of
+`https://` or `http://` as their URL scheme, the Kubernetes Secret that
+provides the credentials for that repository must provide credentials in a
+Secret as follows:
 
-In the example above, we make use of a public repository. To
-make use of a private repository instead, you create a Secret in the
-same namespace as the one where the Workload is being submitted to named after
-the value of `gitops.ssh_secret` (the installation defaults the name to
-`git-ssh`):
-
-```
+```yaml
 apiVersion: v1
 kind: Secret
 metadata:
-  name: git-ssh
+  name: GIT-SECRET-NAME
+	annotations:
+    tekton.dev/git-0: GIT-SERVER
 type: kubernetes.io/ssh-auth
 stringData:
-  known_hosts: string             # git server public keys
-  identity: string                # private key with pull permissions
-  identity.pub: string            # public of the `identity` private key
+  ssh-privatekey: SSH-PRIVATE-KEY     # private key with push-permissions
+  identity: SSH-PRIVATE-KEY           # private key with pull permissions
+  identity.pub: SSH-PUBLIC-KEY        # public of the `identity` private key
+  known_hosts: GIT-SERVER-PUBLIC-KEYS # git server public keys
 ```
 
->**Note**: For a particular Workload, you can override the name of the secret
-by using the `gitops_ssh_secret` parameter (`--param gitops_ssh_secret`)
-in the Workload.
-
-If this is your first time setting up SSH credentials for your user, the following
-steps can serve as a guide:
-
-```
-# generate a new keypair.
-#
-#   - `identity`     (private)
-#   - `identity.pub` (public)
-#
-# once done, head to your git provider and add the `identity.pub` as a
-# deployment key for the repository of interest or add to an account that has
-# access to it. for instance, for github:
-#
-#   https://github.com/<repository>/settings/keys/new
-#
-ssh-keygen -t rsa -q -b 4096 -f "identity" -N "" -C ""
+With the Secret created, attach it to the ServiceAccount used by the Workload.
+For instance:
 
 
-# gather public keys from the provider (e.g., github):
-#
-ssh-keyscan github.com > ./known_hosts
-
-
-# create the secret.
-#
-kubectl create secret generic git-ssh \
-    --from-file=./identity \
-    --from-file=./identity.pub \
-    --from-file=./known_hosts
-```
-
->**Note**: When you create a Secret that provides credentials for accessing your
-private git repository, you can create a deploy key if your Git Provider
-supports it (GitHub does). Any Git secrets you apply to
-your cluster can potentially be viewed by others who have access to that
-cluster. So, it is better to use Deploy keys or shared bot accounts instead of
-adding personal Git Credentials.
-
-With the namespace configured and having added the secret to be used for
-fetching source code from a private repository, you can create the
-Workload:
-
-
-```
-tanzu apps workload create tanzu-java-web-app \
-  --git-branch main \
-  --git-repo https://github.com/sample-accelerators/tanzu-java-web-app
-  --label app.kubernetes.io/part-of=tanzu-java-web-app \
-  --type web
-```
-```
-Create workload:
-      1 + |---
-      2 + |apiVersion: carto.run/v1alpha1
-      3 + |kind: Workload
-      4 + |metadata:
-      5 + |  labels:
-      6 + |    apps.tanzu.vmware.com/workload-type: web
-      7 + |    app.kubernetes.io/part-of: tanzu-java-web-app
-      8 + |  name: tanzu-java-web-app
-      9 + |  namespace: default
-     10 + |spec:
-     11 + |  source:
-     12 + |    git:
-     13 + |      ref:
-     14 + |        branch: main
-     15 + |      url: https://github.com/sample-accelerators/tanzu-java-web-app
-```
-
-#### <a id="local-with-git"></a> Local Iteration with Code from Git
-
-Similar to local iteration with local code, here we make use of the same type
-(`web`), but instead of pointing at source code that we have locally, we can
-make use of a git repository to feed the supply chain with new changes as they
-are pushed to a branch.
-
->**Note**: If you plan to use a private git repository, skip
-to the next section, [Private Source Git Repository](#private-source).
-
-
-```
-tanzu apps workload create tanzu-java-web-app \
-  --git-branch main \
-  --git-repo https://github.com/sample-accelerators/tanzu-java-web-app
-  --label app.kubernetes.io/part-of=tanzu-java-web-app \
-  --type web
-```
-```
-Create workload:
-      1 + |---
-      2 + |apiVersion: carto.run/v1alpha1
-      3 + |kind: Workload
-      4 + |metadata:
-      5 + |  labels:
-      6 + |    apps.tanzu.vmware.com/workload-type: web
-      7 + |    app.kubernetes.io/part-of: tanzu-java-web-app
-      8 + |  name: tanzu-java-web-app
-      9 + |  namespace: default
-     10 + |spec:
-     11 + |  source:
-     12 + |    git:
-     13 + |      ref:
-     14 + |        branch: main
-     15 + |      url: https://github.com/sample-accelerators/tanzu-java-web-app
-```
-
-This scenario is only possible if the installation of the supply
-chain did not include a default git repository prefix
-(`gitops.repository_prefix`).
-
-
-##### <a id="private-source"></a> Private Source Git Repository
-
-In the example above, we make use of a public repository. To
-make use of a private repository instead, you create a Secret in the
-same namespace as the one where the Workload is being submitted to named after
-the value of `gitops.ssh_secret` (the installation defaults the name to
-`git-ssh`):
-
-```
+```yaml
 apiVersion: v1
-kind: Secret
+kind: ServiceAccount
 metadata:
-  name: git-ssh
-type: kubernetes.io/ssh-auth
-stringData:
-  known_hosts: string             # git server public keys
-  identity: string                # private key with pull permissions
-  identity.pub: string            # public of the `identity` private key
+  name: default
+secrets:
+  - name: registry-credentials
+  - name: tap-registry
+  - name: GIT-SECRET-NAME
+imagePullSecrets:
+  - name: registry-credentials
+  - name: tap-registry
 ```
 
->**Note**: For a particular Workload, you can override the name of the secret
-by using the `gitops_ssh_secret` parameter (`--param gitops_ssh_secret`)
-in the Workload.
-
-If this is your first time setting up SSH credentials for your user, the following
-steps can serve as a guide:
-
-```
-# generate a new keypair.
-#
-#   - `identity`     (private)
-#   - `identity.pub` (public)
-#
-# once done, head to your git provider and add the `identity.pub` as a
-# deployment key for the repository of interest or add to an account that has
-# access to it. for instance, for github:
-#
-#   https://github.com/<repository>/settings/keys/new
-#
-ssh-keygen -t rsa -q -b 4096 -f "identity" -N "" -C ""
-
-
-# gather public keys from the provider (e.g., github):
-#
-ssh-keyscan github.com > ./known_hosts
-
-
-# create the secret.
-#
-kubectl create secret generic git-ssh \
-    --from-file=./identity \
-    --from-file=./identity.pub \
-    --from-file=./known_hosts
-```
-
->**Note**: When you create a Secret that provides credentials for accessing your
-private git repository, you can create a deploy key if your Git Provider
-supports it (GitHub does). Any Git secrets you apply to
-your cluster can potentially be viewed by others who have access to that
-cluster. So, it is better to use Deploy keys or shared bot accounts instead of
-adding personal Git Credentials.
-
-With the namespace configured and having added the secret to be used for
-fetching source code from a private repository, you can create the
-Workload:
-
-
-```
-tanzu apps workload create tanzu-java-web-app \
-  --git-branch main \
-  --git-repo https://github.com/sample-accelerators/tanzu-java-web-app
-  --label app.kubernetes.io/part-of=tanzu-java-web-app \
-  --type web
-```
-```
-Create workload:
-      1 + |---
-      2 + |apiVersion: carto.run/v1alpha1
-      3 + |kind: Workload
-      4 + |metadata:
-      5 + |  labels:
-      6 + |    apps.tanzu.vmware.com/workload-type: web
-      7 + |    app.kubernetes.io/part-of: tanzu-java-web-app
-      8 + |  name: tanzu-java-web-app
-      9 + |  namespace: default
-     10 + |spec:
-     11 + |  source:
-     12 + |    git:
-     13 + |      ref:
-     14 + |        branch: main
-     15 + |      url: https://github.com/sample-accelerators/tanzu-java-web-app
-```
-
-
-#### GitOps
-
-Differently from local iteration, with the GitOps approach we end up at the end
-of the supply chain having the configuration that got created by it pushed to a
-git repository where that is persisted and used at the basis for further
-deployments.
-
-```
-SUPPLY CHAIN
-
-    given a Workload
-      watches sourcecode repo
-        builds container image
-          prepare configuration
-            pushes config to git
-
-
-DELIVERY
-
-    given a Deliverable
-      watches configurations repo
-        deploys the kubernetes configurations
-
-```
-
-Given the extra capability of pushing to git,
-there must be in the developer namespace (i.e., same namespace as the one
-where the Workload is submitted to) a Secret containing credentials to a git
-provider (e.g., GitHub), regardless of whether the source code comes from a
-private git repository or not.
-
-Before proceeding, make sure you have a secret with following shape fields and
-annotations set:
-
-```
-apiVersion: v1
-kind: Secret
-metadata:
-  name: git-ssh   # `git-ssh` is the default name.
-                  #   - operators can change the default using `gitops.ssh_secret`.
-                  #   - developers can override using `gitops_ssh_secret`
-  annotations:
-    tekton.dev/git-0: github.com  # git server host   (!! required)
-type: kubernetes.io/ssh-auth
-stringData:
-  ssh-privatekey: string          # private key with push-permissions
-  known_hosts: string             # git server public keys
-  identity: string                # private key with pull permissions
-  identity.pub: string            # public of the `identity` private key
-```
-
->**Note**: Because of incompatibilities between Kubernetes resources
- `ssh-privatekeys` must be set to the same value as `identity`.
-
-With the Secret created, we can move on to the Workload.
+For more informations about the credentials and setting up the Kubernetes
+secret, check out [Git Authentication's SSH section](git-auth.md#sh).
 
 
 ### Workload Using Default Git Organization
