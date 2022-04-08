@@ -9,7 +9,9 @@ templates for each resource, to the whole supply chains and delivery objects.
 Depending on how TAP has been installed, there will be different ways of
 achieving such customization of the out of the box supply chains.
 
-Below you'll find sections covering different setups and how to proceed.
+Below you'll find sections covering diffent ways that supply chains and
+templates can be authored within the context of profile-based TAP
+installations.
 
 
 ## Providing your own supply chain
@@ -75,6 +77,24 @@ supply chains of the corresponding packages:
 For details on how to modify an existing supply chain, check out the [Modifying
 an Out of the Box Supply Chain](#modifying-an-out-of-the-box-supply-chain)
 section.
+
+In case a supply chain package must not be included in the installation to
+prevent any of the conflicts above, like any other package, using TAP profiles
+we can prevent supply chains from being installed you can make use of the
+`excluded_packages` property in `tap-values.yml`. For instance:
+
+```yaml
+# add to exclued_packages `ootb-*` packages you DON'T want to install
+# 
+excluded_packages:
+  - ootb-supply-chain-basic.apps.tanzu.vmware.com
+  - ootb-supply-chain-testing.apps.tanzu.vmware.com
+  - ootb-supply-chain-testing-scanning.apps.tanzu.vmware.com
+
+# comment out remove the `supply_chain` property
+#
+# supply_chain: ""
+```
 
 
 ## Providing your own templates
@@ -331,7 +351,12 @@ preserved but the contents changed, the supply chains will now all embed to the
 build of the application container images that `FOO` environment variable.
 
 
-## TAP Profiles
+## Live modification of supply chains and templates
+
+In the sections above we covered how one can update the supply chains or
+templates that have been installed in a cluster, but haven't touched on how one
+could experiment with them making small changes in a live setup with plain
+`kubectl edit`, covered in this section.
 
 When installing TAP making use of profiles, a `PackageInstall` object is
 created, which in turn creates a whole set of children `PackageInstall` objects
@@ -356,66 +381,45 @@ persisted instead of the changes.
 
 Given that, before we perform any customizations to what's been provided out of
 the box via the Out of the Box packages, we need to pause the top-level
-`PackageInstall/tap`.
+`PackageInstall/tap` object:
 
 
+```bash
+kubectl edit -n tap-install packageinstall tap
 ```
-# create the PackageInstall object that installs a certain version of TAP,
-# which then translates to a series of PackageInstall objects (one for each
-# package) being submitted
-#
-tanzu package install tap --values-file tap-values.yaml
-```
-
-
-
-
-
-* TAP-specific details (pause package installation .. renaming ...)
-
-    --> if you used profiles:
-    --> if you didn't use profiles but did `tanzu package install`
-
-
-### Profile-based installation
-
-1. pause TAP package install
-
-
-### Component-based installation
-
-1. pause the PackageInstall for `ootb-templates`, if wanting to change
-   templates
-
-1. pause the PackageInstall for `ootb-supply-chain-<>` for changing
-   supplychains
-
-
-## Preventing TAP supply chains from being installed
-
-Just like any other package, Using TAP profiles we can prevent supply chains
-from being installed you can make use of the `excluded_packages` property in
-`tap-values.yml`. For instance:
-
-```yaml
-# add to exclued_packages `ootb-*` packages you DON'T want to install
-# 
-excluded_packages:
-  - ootb-supply-chain-basic.apps.tanzu.vmware.com
-  - ootb-supply-chain-testing.apps.tanzu.vmware.com
-  - ootb-supply-chain-testing-scanning.apps.tanzu.vmware.com
-
-# comment out remove the `supply_chain` property
-#
-# supply_chain: ""
+```console
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  name: tap
+  namespace: tap-install
+spec:
+  paused: true                    # ! set this field to `paused: true`.
+  packageRef:
+    refName: tap.tanzu.vmware.com
+    versionSelection:
+# ...
 ```
 
-With the profile configured to not install the supply chains, there will be no
-TAP-originated ClusterSupplyChain objects in the cluster.
+With the installation of TAP paused, all of the currently installed components
+will still be there, but any changes to those children PackageInstall objects
+will not be overwritten.
 
+Now we can move on to pausing the PackageInstall objects that relate to the
+templates/supplychains we want to modify. 
 
+For instance:
 
-## Cartographer
+- to modify templates: `kubectl edit -n tap-install packageinstall
+  ootb-templates`
 
+- to modify the basic supply chains: `kubectl edit -n tap-install
+  packageinstall ootb-supply-chain-basic`
 
-https://cartographer.sh/docs/development/tutorials/first-supply-chain/
+setting `packageinstall.spec.paused: true`.
+
+With the installations now paused, any further live changes to templates/supply
+chains will be persisted until the PackageInstalls are reverted to not being
+paused. To persist the changes, follow the steps outlined in the sections
+above.
+
