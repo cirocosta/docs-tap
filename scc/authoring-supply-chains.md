@@ -18,7 +18,12 @@ that's required is making sure that the supply chain does not conflict with the
 ones that are installed in the cluster, after all, those objects are
 cluster-scoped.
 
-That said, it's important to observe the two possible collisions:
+If this is your first time creating one, make sure to follow the tutorials from
+the Cartographer documentation:
+https://cartographer.sh/docs/v0.3.0/tutorials/first-supply-chain/
+
+That said, it's important to observe that any supply chain installed in a TAP
+cluster might suffer with two possible cases of collisions:
 
 - **object name**: as mentioned before, supply chains (ClusterSupplyChain
   resource) are cluster scoped (just like any Cartographer resource prefixed
@@ -36,6 +41,9 @@ That said, it's important to observe the two possible collisions:
   Either create a supply chain whose selection rules are different from the
   ones used by the Out of the Box Supply Chain packages, or remove the 
   installation of the corresponding `ootb-supply-chain-*` from TAP.
+  
+  See [Selectors](https://cartographer.sh/docs/v0.3.0/architecture/#selectors)
+  to know more about it.
 
 Currently (TAP 1.1), the following selection rules are in place for the
 supply chains of the corresponding packages:
@@ -62,6 +70,29 @@ supply chains of the corresponding packages:
   - ClusterSupplyChain/**source-test-scan-to-url**
      - label `apps.tanzu.vmware.com/workload-type: web`
      - label `apps.tanzu.vmware.com/has-test: true`
+
+
+## Preventing TAP supply chains from being installed
+
+Just like any other package, Using TAP profiles we can prevent supply chains
+from being installed you can make use of the `excluded_packages` property in
+`tap-values.yml`. For instance:
+
+```yaml
+# add to exclued_packages `ootb-*` packages you DON'T want to install
+# 
+excluded_packages:
+  - ootb-supply-chain-basic.apps.tanzu.vmware.com
+  - ootb-supply-chain-testing.apps.tanzu.vmware.com
+  - ootb-supply-chain-testing-scanning.apps.tanzu.vmware.com
+
+# comment out remove the `supply_chain` property
+#
+# supply_chain: ""
+```
+
+With the profile configured to not install the supply chains, there will be no
+TAP-originated ClusterSupplyChain objects in the cluster.
 
 
 ## Modifying a supplychain from ootb-supply-chain-
