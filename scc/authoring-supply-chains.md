@@ -47,7 +47,7 @@ modification to is the `source-to-url` provided by the
       -b registry.tanzu.vmware.com/tanzu-application-platform/tap-packages@sha256:f2ad401bb3e850940... \
       -o ootb-supply-chain-basic
     ```
-    ```
+    ```console
     Pulling bundle 'registry.tanzu.vmware.com/tanzu-...
       Extracting layer 'sha256:542f2bb8eb946fe9d2c8a...
 
@@ -93,7 +93,7 @@ modification to is the `source-to-url` provided by the
     being submitted to Kubernetes, so before applying the modified supply chain
     to the cluster, use YTT to interpolate those values and then apply:
 
-    ```
+    ```bash
     ytt \
       --ignore-unknown-comments \
       --file ./ootb-supply-chain-basic/config \
