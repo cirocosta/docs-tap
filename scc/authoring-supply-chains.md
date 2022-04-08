@@ -72,6 +72,10 @@ supply chains of the corresponding packages:
      - label `apps.tanzu.vmware.com/workload-type: web`
      - label `apps.tanzu.vmware.com/has-test: true`
 
+For details on how to modify an existing supply chain, check out the [Modifying
+an Out of the Box Supply Chain](#modifying-an-out-of-the-box-supply-chain)
+section.
+
 
 ## Providing your own templates
 
@@ -105,11 +109,12 @@ Currently, the following set of objects are provided by `ootb-templates`:
 Before submitting your own, make sure that either the name and resource has no
 conflicts with the ones installed by `ootb-templates`, or exclude from the
 installation the template you want to override making use of the
-`excluded_templates` property of `ootb-templates`. 
+`excluded_templates` property of `ootb-templates`.
 
-For instance, if we wanted to override `config-template` to provide our own
-with the very same name (so that we don't need to modify the supply chain), in
-`tap-values.yml` exclude the TAP-provided template:
+For instance, if we wanted to override the `ClusterConfigTemplate` named
+`config-template` to provide our own with the very same name (so that we don't
+need to modify the supply chain), in `tap-values.yml` exclude the TAP-provided
+template:
 
 ```yaml
 ootb_templates:
@@ -117,17 +122,21 @@ ootb_templates:
     - 'config-writer'
 ```
 
+For details on how to modify an existing template, check out the [Modifying
+an Out of the Box Supply template](#modifying-an-out-of-the-box-template)
+section.
 
-## Modifying a supplychain from ootb-supply-chain-
+
+## Modifying an Out of the Box Supply Chain
 
 In case either the shape of a supply chain or the templates that it points at
-should be changed, a few steps should be followed.
+should be slightly changed, we recommend following the steps below:
 
 1. Copy one of the reference supply chains
 1. Remove the old one (see [preventing TAP supply chains from being
    installed](#preventing-tap-supply-chains-from-being-installed))
 1. Modify the supply chain object
-1. Submit to the cluster
+1. Submit the modified supply chain to the cluster
 
 ### Example
 
@@ -216,7 +225,7 @@ modification to is the `source-to-url` provided by the
     > expected to exist.
 
 
-## Modifying a template from ootb-templates
+## Modifying an Out of the Box Supply template
 
 The Out of the Box Templates package (`ootb-templates`) concentrates all the
 templates and shared Tekton Tasks used by the supply chains shipped via
@@ -226,20 +235,33 @@ Any templates that one wishes to modify (for instance, to change details about
 the resources that are created based on them) would be found as part of this
 package.
 
-The workflow for getting any of them updated is as follows:
+The workflow for getting any of them updated goes as follows:
 
-1. fetch the contents of `ootb-templates`
-1. copy and create a new version of any of the templates you wish to modify
-   (i.e., copy the contents and create template objects with new names)
-1. submit the template to Kubernetes
-1. modify the supply chain that makes use of the templates to point at the new
-   ones instead
+1. Copy one of the reference templates from `ootb-templates`
+1. Exclude that template from set of objects provided by `ootb-templates` (see
+   `excluded_templates` in [Providing your Own
+   Templates](#providing-your-own-templates))
+1. Modify the template
+1. Submit the modified template to the cluster
 
+Note that in this case we don't need to change anything related to supply
+chains - because we're preserving the name of the object (which is referenced
+to by the supply chain), no changes to the supply chain would be necessary.
 
 
 ### Example
 
-Suppose that we ...
+Suppose that we want to update the `ClusterImageTemplate` object called
+`kpack-template` that provides a template for `kpack/Image`s to be created to
+hardcode some environment variable.
+
+1. Exclude the `kpack-template` from the set of templates that `ootb-templates`
+installs by upating `tap-values.yml`
+
+		```
+		ootb_templates:
+			excluded_templates: ['kpack-template']
+		```
 
 1. Find out the image that contains the templates
 
@@ -252,7 +274,7 @@ Suppose that we ...
     registry.tanzu.vmware.com/tanzu-application-platform/tap-packages@sha256:a5e177f38d7287f2ca7ee2afd67ff178645d8f1b1e47af4f192a5ddd6404825e
     ```
 
-3. Pull the contents of the bundle into a directory named `ootb-templates`
+1. Pull the contents of the bundle into a directory named `ootb-templates`
 
     ```bash
     imgpkg pull \
@@ -260,9 +282,16 @@ Suppose that we ...
       -o ootb-templates
     ```
     ```
+    Pulling bundle 'registry.tanzu.vmware.com/tanzu-...
+      Extracting layer 'sha256:a5e177f38d7...
+
+    Locating image lock file images...
+    The bundle repo (registry.tanzu.vmware.com/tanzu...
+
+    Succeeded
     ```
 
-4. Observe that we've downloaded all the templates
+1. Observe that we've downloaded all the templates
 
     ```bash
     tree ./ootb-templates
@@ -272,17 +301,34 @@ Suppose that we ...
     ├── config
     │   ├── cluster-roles.yaml
     │   ├── config-template.yaml
-    │   ├── config-writer-template.yaml
-    │   ├── convention-template.yaml
-    │   ├── deliverable-template.yaml
-    │   ├── delivery-source-template.yaml
-    │   ├── deployment-template.yaml
+    │   ├── kpack-template.yaml         # ! the one we want to modify
     ...
     │   └── testing-pipeline.yaml
     └── values.yaml
     ```
 
+1. Change the property we want to change
 
+		```diff
+		--- a/config/kpack-template.yaml
+		+++ b/config/kpack-template.yaml
+		@@ -65,6 +65,8 @@ spec:
+						 subPath: #@ data.values.workload.spec.source.subPath
+					 build:
+						 env:
+		+        - name: FOO
+		+          value: BAR
+						 - name: BP_OCI_SOURCE
+							 value: #@ data.values.source.revision
+						 #@ if/end param("live-update"):
+		```
+
+1. Submit the template
+
+
+With the template now submitted, because the name of the template has been
+preserved but the contents changed, the supply chains will now all embed to the
+build of the application container images that `FOO` environment variable.
 
 
 ## TAP Profiles
