@@ -156,7 +156,7 @@ so:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: git-credentials
+  name: SECRET-NAME
 type: kubernetes.io/basic-auth
 stringData:
   username: GIT-USERNAME
@@ -178,7 +178,7 @@ as follows:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: git-credentials
+  name: SECRET-NAME
 type: kubernetes.io/basic-auth
 stringData:
   username: ""
@@ -201,19 +201,18 @@ First make sure that the repository URL in the Workload spec makes use of
 `ssh://git@github.com:my-org/my-repo.git`).  Then, create a Kubernetes Secret
 object of type `kubernetes.io/ssh-auth` like so:
 
+
 ```yaml
 apiVersion: v1
 kind: Secret
 metadata:
-  name: git-ssh
+  name: SECRET-NAME
 type: kubernetes.io/ssh-auth
 stringData:
   known_hosts: string             # git server public keys
   identity: string                # private key with pull permissions
   identity.pub: string            # public key of the `identity` key pair
 ```
-
-
 
 1. Generate a new SSH key pair (`identity` and `identity.pub`)
 
@@ -226,7 +225,9 @@ stringData:
     access to it. For instance, for GitHub, visit
     `https://github.com/<repository>/settings/keys/new`.
 
-1. gather public keys from the provider (e.g., github):
+    > **Note:** keys of type SHA-1/RSA have been recently deprecated by GitHub.
+
+1. Gather public keys from the provider (e.g., github):
 
     ```bash
     ssh-keyscan github.com > ./known_hosts
@@ -235,7 +236,7 @@ stringData:
 1. Create the Kubernetes Secret based using the contents of the files above:
 
     ```bash
-    kubectl create secret generic git-ssh \
+    kubectl create secret generic SECRET-NAME \
       --from-file=./identity \
       --from-file=./identity.pub \
       --from-file=./known_hosts
@@ -244,13 +245,13 @@ stringData:
 ### How it works
 
 With the `workload.spec.source.git` filled, the supply chain takes care of
-creating a child `GitRepository` object that keeps track of commits made to the
+managing a child `GitRepository` object that keeps track of commits made to the
 git repository stated in `workload.spec.source.git`.
 
 For each revision found, `gitrepository.status.artifact` gets updated providing
-information about an HTTP endpoint that it makes available for other components
-to fetch the source code from within the cluster, as well as the digest of the
-latest commit found:
+information about an HTTP endpoint that the controller makes available for
+other components to fetch the source code from within the cluster, as well as
+the digest of the latest commit found:
 
 ```yaml
 apiVersion: source.toolkit.fluxcd.io/v1beta1
@@ -280,25 +281,31 @@ status:
   observedGeneration: 1
 ```
 
-This way, with Cartographer passing the artifact URL and revision for further
-components, those just need to be able to consume source code from an internal
-URL where a tarball with the source code can be fetch, not having to deal with
-any Git-specific details.
+This way, with Cartographer passing the artifact URL and revision to further
+components in the supply chain, those just need to consume the source code from
+an internal URL where a tarball with the source code can be fetched, not having
+to deal with any Git-specific details in multiple places.
 
 
+### Workload parameters
 
-### Related Parameters
-
-There are a couple of parameters that can be passed via the Workload object's
+There are a two parameters that can be passed via the Workload object's
 `workload.spec.params` field to override the default behavior of the
-GitRepository object created for keeping track of the changes to a repository.
-
-These are:
+GitRepository object created for keeping track of the changes to a repository:
 
 - `gitImplementation`: name of the git implementation (one of `libgit2` or
   `go-git`) to be used for fetching the source code
+
 - `gitops_ssh_secret`: name of the secret in the same namespace as the Workload
   where credentials to for fetching the repository can be found.
+
+These can also be customized with defaults for the whole cluster via properties
+for either `tap-values.yml` (when installing supply chains via TAP profiles),
+or `ootb-supply-chain-*-values.yml` (when installing the OOTB packages
+individually):
+
+- `git_implementation` (same as `gitImplementation` as a Workload parameter)
+- `gitops.ssh_secret` (same as `gitops_ssh_secret` Workload parameter)
 
 
 ## Local source
@@ -340,8 +347,7 @@ spec:
     image: 10.188.0.3:5000/test:latest
 ```
 
-we should see that instead of a GitRepository object, we get an
-ImageRepository:
+we see that instead of a GitRepository object, an ImageRepository is created:
 
 ```diff
   Workload/app
