@@ -11,6 +11,7 @@ achieving such customization of the out of the box supply chains.
 
 Below you'll find sections covering different setups and how to proceed.
 
+
 ## Providing your own supply chain
 
 To create a supply chain from scratch and make it available for Workloads, all
@@ -100,10 +101,11 @@ TAP-originated ClusterSupplyChain objects in the cluster.
 In case either the shape of a supply chain or the templates that it points at
 should be changed, a few steps should be followed.
 
-1. copy one of the reference supply chains
-1. remove the old one (add to `excluded_packages`)
-1. modify the supply chain object
-1. submit to the cluster
+1. Copy one of the reference supply chains
+1. Remove the old one (see [preventing TAP supply chains from being
+   installed](#preventing-tap-supply-chains-from-being-installed))
+1. Modify the supply chain object
+1. Submit to the cluster
 
 ### Example
 
