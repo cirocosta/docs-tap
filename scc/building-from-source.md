@@ -217,29 +217,29 @@ stringData:
 
 1. Generate a new SSH key pair (`identity` and `identity.pub`)
 
-  ```bash
-  ssh-keygen -t ecdsa -b 521 -C "" -f "identity" -N ""
-  ```
+    ```bash
+    ssh-keygen -t ecdsa -b 521 -C "" -f "identity" -N ""
+    ```
 
-  Once done, head to your git provider and add the `identity.pub` as a
-  deployment key for the repository of interest or add to an account that has
-  access to it.  for instance, for github:
-  `https://github.com/<repository>/settings/keys/new`.
+    Once done, head to your git provider and add the `identity.pub` as a
+    deployment key for the repository of interest or add to an account that has
+    access to it. For instance, for GitHub, visit
+    `https://github.com/<repository>/settings/keys/new`.
 
 1. gather public keys from the provider (e.g., github):
 
-  ```bash
-  ssh-keyscan github.com > ./known_hosts
-  ```
+    ```bash
+    ssh-keyscan github.com > ./known_hosts
+    ```
 
 1. Create the Kubernetes Secret based using the contents of the files above:
 
-  ```bash
-  kubectl create secret generic git-ssh \
+    ```bash
+    kubectl create secret generic git-ssh \
       --from-file=./identity \
       --from-file=./identity.pub \
       --from-file=./known_hosts
-  ```
+    ```
 
 ### How it works
 
